@@ -5,14 +5,14 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Notifications from 'expo-notifications';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { initDatabase } from '@/database/schema';
-import { configureNotifications, rescheduleAllNotifications } from '@/notifications/scheduler';
+import { initDatabase } from '../src/database/schema';
+import { configureNotifications, rescheduleAllNotifications } from '../src/notifications/scheduler';
 import {
   handleNotificationReceived,
   handleNotificationResponse,
   registerNotificationActions,
-} from '@/notifications/handlers';
-import { getAllMedications } from '@/database/medications';
+} from '../src/notifications/handlers';
+import { getAllMedications } from '../src/database/medications';
 
 I18nManager.forceRTL(true);
 
