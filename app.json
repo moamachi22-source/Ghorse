@@ -43,7 +43,6 @@
         {
           "icon": "./assets/notification-icon.png",
           "color": "#6C63FF",
-          "sounds": ["./assets/sounds/default.wav"]
         }
       ],
       [
