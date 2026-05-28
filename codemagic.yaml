@@ -8,7 +8,7 @@ workflows:
     scripts:
       - name: Install dependencies
         script: |
-          npm install
+          npm install --prefer-offline --no-audit --legacy-peer-deps
       - name: Setup Expo
         script: |
           npx expo install --check
@@ -31,7 +31,7 @@ workflows:
     scripts:
       - name: Install dependencies
         script: |
-          npm install
+          npm install --prefer-offline --no-audit --legacy-peer-deps
       - name: Setup Expo
         script: |
           npx expo install --check
