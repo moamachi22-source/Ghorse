@@ -125,5 +125,5 @@ export const scheduleSnoozeNotification = async (
       }),
     },
     trigger: {
-      seconds: 15 * 60,
+      seconds: 900,
     },
