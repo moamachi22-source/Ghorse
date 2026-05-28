@@ -8,7 +8,9 @@ workflows:
     scripts:
       - name: Install dependencies
         script: |
-          npm install --prefer-offline --no-audit --legacy-peer-deps
+          npm install --legacy-peer-deps
+          npm install @babel/helper-validator-identifier@7.25.9 --legacy-peer-deps
+          npm install @babel/core@7.23.9 --legacy-peer-deps
       - name: Setup Expo
         script: |
           npx expo install --check
@@ -31,10 +33,9 @@ workflows:
     scripts:
       - name: Install dependencies
         script: |
-          npm install --prefer-offline --no-audit --legacy-peer-deps
-      - name: Setup Expo
-        script: |
-          npx expo install --check
+          npm install --legacy-peer-deps
+          npm install @babel/helper-validator-identifier@7.25.9 --legacy-peer-deps
+          npm install @babel/core@7.23.9 --legacy-peer-deps
       - name: Install CocoaPods
         script: |
           cd ios && pod install
