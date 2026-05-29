@@ -14,43 +14,19 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.ghors.app",
-      "infoPlist": {
-        "UIBackgroundModes": ["audio", "fetch"],
-        "NSMicrophoneUsageDescription": "برای ضبط صدای یادآوری شخصی دارو",
-        "NSUserNotificationsUsageDescription": "برای یادآوری زمان مصرف دارو"
-      }
+      "bundleIdentifier": "com.ghors.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#6C63FF"
       },
-      "package": "com.ghors.app",
-      "permissions": [
-        "RECEIVE_BOOT_COMPLETED",
-        "VIBRATE",
-        "RECORD_AUDIO",
-        "SCHEDULE_EXACT_ALARM",
-        "USE_EXACT_ALARM"
-      ]
+      "package": "com.ghors.app"
     },
     "plugins": [
       "expo-router",
       "expo-font",
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/notification-icon.png",
-          "color": "#6C63FF",
-        }
-      ],
-      [
-        "expo-av",
-        {
-          "microphonePermission": "برای ضبط صدای یادآوری شخصی دارو"
-        }
-      ]
+      "expo-av"
     ],
     "scheme": "ghors",
     "experiments": {
