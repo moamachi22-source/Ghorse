@@ -1,20 +1,9 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
-import Animated, {
-  FadeInDown,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated';
-import { Medication } from '@/database/medications';
-import { formatTime, formatRemainingDays, toPersianDigits } from '@/utils/persian';
-import { isLowStock } from '@/utils/calculations';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { Medication } from '../database/medications';
+import { formatTime, formatRemainingDays, toPersianDigits } from '../utils/persian';
+import { isLowStock } from '../utils/calculations';
 
 interface MedicationCardProps {
   medication: Medication;
@@ -41,118 +30,74 @@ export const MedicationCard: React.FC<MedicationCardProps> = ({
     transform: [{ scale: scale.value }],
   }));
 
-  const handlePressIn = () => {
-    scale.value = withSpring(0.97);
-  };
-
-  const handlePressOut = () => {
-    scale.value = withSpring(1);
-  };
+  const handlePressIn = () => { scale.value = withSpring(0.97); };
+  const handlePressOut = () => { scale.value = withSpring(1); };
 
   const handleDelete = () => {
     Alert.alert(
       'حذف دارو',
-      `آیا میخواید ${medication.name} رو حذف کنید؟`,
+      'آیا میخواید ' + medication.name + ' رو حذف کنید؟',
       [
         { text: 'لغو', style: 'cancel' },
-        {
-          text: 'حذف',
-          style: 'destructive',
-          onPress: () => onDelete(medication.id),
-        },
+        { text: 'حذف', style: 'destructive', onPress: () => onDelete(medication.id) },
       ]
     );
   };
 
-  const lowStock = isLowStock(
-    medication.total_pills,
-    medication.pills_per_dose,
-    medication.times.length,
-    takenDoses
-  );
+  const lowStock = isLowStock(medication.total_pills, medication.pills_per_dose, medication.times.length, takenDoses);
 
   return (
     <Animated.View entering={FadeInDown.delay(index * 100).springify()}>
       <Animated.View style={animatedStyle}>
-        <TouchableOpacity
-          activeOpacity={1}
-          onPressIn={handlePressIn}
-          onPressOut={handlePressOut}
-        >
+        <TouchableOpacity activeOpacity={1} onPressIn={handlePressIn} onPressOut={handlePressOut}>
           <View style={[styles.card, lowStock && styles.cardLowStock]}>
-
             {lowStock && (
               <View style={styles.lowStockBanner}>
-                <Text style={styles.lowStockText}>
-                  ⚠️ دارو داره تموم میشه
-                </Text>
+                <Text style={styles.lowStockText}>دارو داره تموم میشه</Text>
               </View>
             )}
-
             <View style={styles.header}>
               <View style={styles.nameContainer}>
                 <Text style={styles.medicationName}>{medication.name}</Text>
                 <Text style={styles.dose}>{medication.dose}</Text>
               </View>
               <View style={styles.actions}>
-                <TouchableOpacity
-                  style={styles.editButton}
-                  onPress={() => onEdit(medication.id)}
-                >
+                <TouchableOpacity style={styles.editButton} onPress={() => onEdit(medication.id)}>
                   <Text style={styles.editButtonText}>ویرایش</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.deleteButton}
-                  onPress={handleDelete}
-                >
+                <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
                   <Text style={styles.deleteButtonText}>حذف</Text>
                 </TouchableOpacity>
               </View>
             </View>
-
             <View style={styles.divider} />
-
             <View style={styles.timesContainer}>
               <Text style={styles.sectionLabel}>زمان مصرف:</Text>
               <View style={styles.timeChips}>
                 {medication.times.map((time, i) => (
                   <View key={i} style={styles.timeChip}>
-                    <Text style={styles.timeChipText}>
-                      {formatTime(time)}
-                    </Text>
+                    <Text style={styles.timeChipText}>{formatTime(time)}</Text>
                   </View>
                 ))}
               </View>
             </View>
-
             <View style={styles.footer}>
               <View style={styles.footerItem}>
                 <Text style={styles.footerLabel}>هر بار</Text>
-                <Text style={styles.footerValue}>
-                  {toPersianDigits(medication.pills_per_dose)} عدد
-                </Text>
+                <Text style={styles.footerValue}>{toPersianDigits(medication.pills_per_dose)} عدد</Text>
               </View>
               <View style={styles.footerDivider} />
               <View style={styles.footerItem}>
                 <Text style={styles.footerLabel}>باقیمانده</Text>
-                <Text
-                  style={[
-                    styles.footerValue,
-                    lowStock && styles.footerValueDanger,
-                  ]}
-                >
+                <Text style={[styles.footerValue, lowStock && styles.footerValueDanger]}>
                   {formatRemainingDays(remainingDays)}
                 </Text>
               </View>
               <View style={styles.footerDivider} />
-              <TouchableOpacity
-                style={styles.takenButton}
-                onPress={() => onMarkTaken(medication)}
-              >
-                <Text style={styles.takenButtonText}>✅ خوردم</Text>
+              <TouchableOpacity style={styles.takenButton} onPress={() => onMarkTaken(medication)}>
+                <Text style={styles.takenButtonText}>خوردم</Text>
               </TouchableOpacity>
             </View>
-
           </View>
         </TouchableOpacity>
       </Animated.View>
@@ -194,9 +139,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
-  nameContainer: {
-    flex: 1,
-  },
+  nameContainer: { flex: 1 },
   medicationName: {
     fontSize: 20,
     fontFamily: 'Vazirmatn_Bold',
@@ -242,9 +185,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0EFFF',
     marginVertical: 12,
   },
-  timesContainer: {
-    marginBottom: 12,
-  },
+  timesContainer: { marginBottom: 12 },
   sectionLabel: {
     fontSize: 13,
     fontFamily: 'Vazirmatn',
@@ -292,9 +233,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Vazirmatn_Bold',
     color: '#2D2D3A',
   },
-  footerValueDanger: {
-    color: '#FF6B6B',
-  },
+  footerValueDanger: { color: '#FF6B6B' },
   footerDivider: {
     width: 1,
     height: 30,
