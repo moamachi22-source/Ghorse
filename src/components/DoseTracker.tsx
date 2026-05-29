@@ -1,16 +1,7 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-} from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-  withDelay,
-} from 'react-native-reanimated';
-import { toPersianDigits } from '@/utils/persian';
+import { View, Text, StyleSheet } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming, withDelay } from 'react-native-reanimated';
+import { toPersianDigits } from '../utils/persian';
 
 interface DoseTrackerProps {
   total: number;
@@ -19,38 +10,26 @@ interface DoseTrackerProps {
   percentage: number;
 }
 
-export const DoseTracker: React.FC<DoseTrackerProps> = ({
-  total,
-  taken,
-  missed,
-  percentage,
-}) => {
+export const DoseTracker: React.FC<DoseTrackerProps> = ({ total, taken, missed, percentage }) => {
   const progressWidth = useSharedValue(0);
 
   React.useEffect(() => {
-    progressWidth.value = withDelay(
-      300,
-      withTiming(percentage / 100, { duration: 800 })
-    );
+    progressWidth.value = withDelay(300, withTiming(percentage / 100, { duration: 800 }));
   }, [percentage]);
 
   const progressStyle = useAnimatedStyle(() => ({
-    width: `${progressWidth.value * 100}%`,
+    width: (progressWidth.value * 100) + '%',
   }));
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>آمار مصرف</Text>
-
       <View style={styles.progressContainer}>
         <View style={styles.progressBar}>
           <Animated.View style={[styles.progressFill, progressStyle]} />
         </View>
-        <Text style={styles.percentage}>
-          {toPersianDigits(percentage)}٪
-        </Text>
+        <Text style={styles.percentage}>{toPersianDigits(percentage)}٪</Text>
       </View>
-
       <View style={styles.stats}>
         <View style={styles.statItem}>
           <View style={[styles.statDot, { backgroundColor: '#6C63FF' }]} />
