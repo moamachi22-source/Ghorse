@@ -1,6 +1,6 @@
 workflows:
   android-workflow:
-    name: Android Build
+    name: Android Debug Build
     max_build_duration: 60
     environment:
       node: 18.17.0
@@ -10,27 +10,7 @@ workflows:
         script: npm install --legacy-peer-deps && npm install @babel/helper-validator-identifier@7.25.9 --legacy-peer-deps && npm install @babel/core@7.23.9 --legacy-peer-deps && npm install babel-plugin-module-resolver --legacy-peer-deps
       - name: Setup Expo
         script: npx expo install --check || true
-      - name: Build Android APK
-        script: npx expo prebuild --platform android --clean && cd android && ./gradlew assembleRelease
+      - name: Build Android Debug APK
+        script: npx expo prebuild --platform android --clean && cd android && ./gradlew assembleDebug
     artifacts:
-      - android/app/build/outputs/apk/release/*.apk
-      - android/app/build/outputs/bundle/release/*.aab
-
-  ios-workflow:
-    name: iOS Build
-    max_build_duration: 60
-    environment:
-      node: 18.17.0
-      xcode: latest
-      cocoapods: default
-    scripts:
-      - name: Install dependencies
-        script: npm install --legacy-peer-deps && npm install @babel/helper-validator-identifier@7.25.9 --legacy-peer-deps && npm install @babel/core@7.23.9 --legacy-peer-deps && npm install babel-plugin-module-resolver --legacy-peer-deps
-      - name: Setup Expo
-        script: npx expo install --check || true
-      - name: Install CocoaPods
-        script: cd ios && pod install
-      - name: Build iOS
-        script: npx expo prebuild --platform ios --clean && xcodebuild -workspace ios/ghors.xcworkspace -scheme ghors -configuration Release -archivePath ios/ghors.xcarchive archive
-    artifacts:
-      - ios/ghors.xcarchive
+      - android/app/build/outputs/apk/debug/*.apk
