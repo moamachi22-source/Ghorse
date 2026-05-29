@@ -1,23 +1,13 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Modal,
-  ScrollView,
-} from 'react-native';
-import { toPersianDigits } from '@/utils/persian';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
+import { toPersianDigits } from '../utils/persian';
 
 interface TimePickerProps {
   times: string[];
   onTimesChange: (times: string[]) => void;
 }
 
-export const TimePicker: React.FC<TimePickerProps> = ({
-  times,
-  onTimesChange,
-}) => {
+export const TimePicker: React.FC<TimePickerProps> = ({ times, onTimesChange }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedHour, setSelectedHour] = useState(8);
   const [selectedMinute, setSelectedMinute] = useState(0);
@@ -26,10 +16,7 @@ export const TimePicker: React.FC<TimePickerProps> = ({
   const minutes = [0, 15, 30, 45];
 
   const handleAddTime = () => {
-    const timeString = `${String(selectedHour).padStart(2, '0')}:${String(
-      selectedMinute
-    ).padStart(2, '0')}`;
-
+    const timeString = String(selectedHour).padStart(2, '0') + ':' + String(selectedMinute).padStart(2, '0');
     if (!times.includes(timeString)) {
       onTimesChange([...times, timeString].sort());
     }
@@ -44,50 +31,34 @@ export const TimePicker: React.FC<TimePickerProps> = ({
     const [hour, minute] = time.split(':').map(Number);
     const period = hour < 12 ? 'صبح' : hour < 17 ? 'ظهر' : 'شب';
     const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
-    return `${toPersianDigits(displayHour)}:${toPersianDigits(
-      String(minute).padStart(2, '0')
-    )} ${period}`;
+    return toPersianDigits(displayHour) + ':' + toPersianDigits(String(minute).padStart(2, '0')) + ' ' + period;
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.label}>زمان‌های مصرف</Text>
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => setModalVisible(true)}
-        >
+        <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
           <Text style={styles.addButtonText}>+ افزودن زمان</Text>
         </TouchableOpacity>
       </View>
-
       <View style={styles.timesList}>
         {times.length === 0 && (
           <Text style={styles.emptyText}>هنوز زمانی اضافه نشده</Text>
         )}
         {times.map((time, index) => (
           <View key={index} style={styles.timeItem}>
-            <TouchableOpacity
-              style={styles.removeButton}
-              onPress={() => handleRemoveTime(time)}
-            >
-              <Text style={styles.removeButtonText}>✕</Text>
+            <TouchableOpacity style={styles.removeButton} onPress={() => handleRemoveTime(time)}>
+              <Text style={styles.removeButtonText}>x</Text>
             </TouchableOpacity>
             <Text style={styles.timeText}>{formatDisplayTime(time)}</Text>
           </View>
         ))}
       </View>
-
-      <Modal
-        visible={modalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}
-      >
+      <Modal visible={modalVisible} transparent animationType="slide" onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>انتخاب زمان</Text>
-
             <View style={styles.pickerContainer}>
               <View style={styles.pickerColumn}>
                 <Text style={styles.pickerLabel}>دقیقه</Text>
@@ -95,45 +66,27 @@ export const TimePicker: React.FC<TimePickerProps> = ({
                   {minutes.map((min) => (
                     <TouchableOpacity
                       key={min}
-                      style={[
-                        styles.pickerItem,
-                        selectedMinute === min && styles.pickerItemSelected,
-                      ]}
+                      style={[styles.pickerItem, selectedMinute === min && styles.pickerItemSelected]}
                       onPress={() => setSelectedMinute(min)}
                     >
-                      <Text
-                        style={[
-                          styles.pickerItemText,
-                          selectedMinute === min && styles.pickerItemTextSelected,
-                        ]}
-                      >
+                      <Text style={[styles.pickerItemText, selectedMinute === min && styles.pickerItemTextSelected]}>
                         {toPersianDigits(String(min).padStart(2, '0'))}
                       </Text>
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
               </View>
-
               <Text style={styles.pickerSeparator}>:</Text>
-
               <View style={styles.pickerColumn}>
                 <Text style={styles.pickerLabel}>ساعت</Text>
                 <ScrollView style={styles.pickerScroll} showsVerticalScrollIndicator={false}>
                   {hours.map((hour) => (
                     <TouchableOpacity
                       key={hour}
-                      style={[
-                        styles.pickerItem,
-                        selectedHour === hour && styles.pickerItemSelected,
-                      ]}
+                      style={[styles.pickerItem, selectedHour === hour && styles.pickerItemSelected]}
                       onPress={() => setSelectedHour(hour)}
                     >
-                      <Text
-                        style={[
-                          styles.pickerItemText,
-                          selectedHour === hour && styles.pickerItemTextSelected,
-                        ]}
-                      >
+                      <Text style={[styles.pickerItemText, selectedHour === hour && styles.pickerItemTextSelected]}>
                         {toPersianDigits(String(hour).padStart(2, '0'))}
                       </Text>
                     </TouchableOpacity>
@@ -141,18 +94,11 @@ export const TimePicker: React.FC<TimePickerProps> = ({
                 </ScrollView>
               </View>
             </View>
-
             <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => setModalVisible(false)}
-              >
+              <TouchableOpacity style={styles.cancelButton} onPress={() => setModalVisible(false)}>
                 <Text style={styles.cancelButtonText}>لغو</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.confirmButton}
-                onPress={handleAddTime}
-              >
+              <TouchableOpacity style={styles.confirmButton} onPress={handleAddTime}>
                 <Text style={styles.confirmButtonText}>تأیید</Text>
               </TouchableOpacity>
             </View>
@@ -164,9 +110,7 @@ export const TimePicker: React.FC<TimePickerProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    marginBottom: 16,
-  },
+  container: { marginBottom: 16 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -189,9 +133,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Vazirmatn',
   },
-  timesList: {
-    gap: 8,
-  },
+  timesList: { gap: 8 },
   emptyText: {
     textAlign: 'center',
     color: '#9E9EA7',
@@ -259,9 +201,7 @@ const styles = StyleSheet.create({
     color: '#9E9EA7',
     marginBottom: 8,
   },
-  pickerScroll: {
-    height: 180,
-  },
+  pickerScroll: { height: 180 },
   pickerItem: {
     paddingVertical: 12,
     paddingHorizontal: 20,
@@ -269,17 +209,13 @@ const styles = StyleSheet.create({
     marginVertical: 2,
     alignItems: 'center',
   },
-  pickerItemSelected: {
-    backgroundColor: '#6C63FF',
-  },
+  pickerItemSelected: { backgroundColor: '#6C63FF' },
   pickerItemText: {
     fontSize: 20,
     fontFamily: 'Vazirmatn_Bold',
     color: '#2D2D3A',
   },
-  pickerItemTextSelected: {
-    color: '#FFFFFF',
-  },
+  pickerItemTextSelected: { color: '#FFFFFF' },
   pickerSeparator: {
     fontSize: 28,
     fontFamily: 'Vazirmatn_Bold',
