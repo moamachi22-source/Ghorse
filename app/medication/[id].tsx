@@ -14,22 +14,18 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useMedicationStore } from '@/store/medicationStore';
-import { getMedicationById } from '@/database/medications';
-import { TimePicker } from '@/components/TimePicker';
-import { AudioRecorder } from '@/components/AudioRecorder';
-import { DoseTracker } from '@/components/DoseTracker';
-import { getAdherenceStats } from '@/database/doses';
-import {
-  scheduleMedicationNotifications,
-  cancelMedicationNotifications,
-} from '@/notifications/scheduler';
-import { toEnglishDigits } from '@/utils/persian';
+import { useMedicationStore } from '../../src/store/medicationStore';
+import { getMedicationById } from '../../src/database/medications';
+import { TimePicker } from '../../src/components/TimePicker';
+import { AudioRecorder } from '../../src/components/AudioRecorder';
+import { DoseTracker } from '../../src/components/DoseTracker';
+import { getAdherenceStats } from '../../src/database/doses';
+import { scheduleMedicationNotifications, cancelMedicationNotifications } from '../../src/notifications/scheduler';
+import { toEnglishDigits } from '../../src/utils/persian';
 
 export default function EditMedicationScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { updateMedication, deleteMedication } = useMedicationStore();
-
   const [name, setName] = useState('');
   const [dose, setDose] = useState('');
   const [totalPills, setTotalPills] = useState('');
@@ -38,17 +34,9 @@ export default function EditMedicationScreen() {
   const [audioUri, setAudioUri] = useState<string | undefined>(undefined);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [stats, setStats] = useState({
-    total: 0,
-    taken: 0,
-    missed: 0,
-    percentage: 0,
-  });
+  const [stats, setStats] = useState({ total: 0, taken: 0, missed: 0, percentage: 0 });
 
-  useEffect(() => {
-    if (!id) return;
-    loadMedication();
-  }, [id]);
+  useEffect(() => { if (id) loadMedication(); }, [id]);
 
   const loadMedication = () => {
     try {
@@ -58,16 +46,13 @@ export default function EditMedicationScreen() {
         router.back();
         return;
       }
-
       setName(medication.name);
       setDose(medication.dose);
       setTotalPills(String(medication.total_pills));
       setPillsPerDose(String(medication.pills_per_dose));
       setTimes(medication.times);
       setAudioUri(medication.audio_uri);
-
-      const adherenceStats = getAdherenceStats(Number(id));
-      setStats(adherenceStats);
+      setStats(getAdherenceStats(Number(id)));
     } catch (error) {
       Alert.alert('خطا', 'مشکلی در بارگذاری پیش اومد');
       router.back();
@@ -103,12 +88,9 @@ export default function EditMedicationScreen() {
   const handleSave = async () => {
     if (!validate()) return;
     if (isSaving) return;
-
     setIsSaving(true);
-
     try {
       const medicationId = Number(id);
-
       updateMedication(medicationId, {
         name: name.trim(),
         dose: dose.trim(),
@@ -118,16 +100,14 @@ export default function EditMedicationScreen() {
         times,
         audio_uri: audioUri,
       });
-
       await cancelMedicationNotifications(medicationId);
       const updated = getMedicationById(medicationId);
       if (updated) {
         await scheduleMedicationNotifications(updated);
       }
-
       Alert.alert(
-        '✅ ذخیره شد',
-        `${name} با موفقیت ویرایش شد`,
+        'ذخیره شد',
+        name + ' با موفقیت ویرایش شد',
         [{ text: 'باشه', onPress: () => router.back() }]
       );
     } catch (error) {
@@ -139,8 +119,8 @@ export default function EditMedicationScreen() {
 
   const handleDelete = () => {
     Alert.alert(
-      '⚠️ حذف دارو',
-      `آیا مطمئنی که میخوای ${name} رو حذف کنی؟ تاریخچه مصرف هم پاک میشه.`,
+      'حذف دارو',
+      'آیا مطمئنی که میخوای ' + name + ' رو حذف کنی؟ تاریخچه مصرف هم پاک میشه.',
       [
         { text: 'لغو', style: 'cancel' },
         {
@@ -168,28 +148,13 @@ export default function EditMedicationScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-
-        <Animated.View
-          entering={FadeInDown.duration(400)}
-          style={styles.header}
-        >
-          <TouchableOpacity
-            style={styles.deleteHeaderButton}
-            onPress={handleDelete}
-          >
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <Animated.View entering={FadeInDown.duration(400)} style={styles.header}>
+          <TouchableOpacity style={styles.deleteHeaderButton} onPress={handleDelete}>
             <Text style={styles.deleteHeaderButtonText}>حذف</Text>
           </TouchableOpacity>
-
           <Text style={styles.headerTitle}>ویرایش دارو</Text>
-
-          <TouchableOpacity
-            style={styles.cancelButton}
-            onPress={() => router.back()}
-          >
+          <TouchableOpacity style={styles.cancelButton} onPress={() => router.back()}>
             <Text style={styles.cancelButtonText}>لغو</Text>
           </TouchableOpacity>
         </Animated.View>
@@ -199,7 +164,6 @@ export default function EditMedicationScreen() {
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
-
           <Animated.View entering={FadeInDown.delay(50).duration(400)}>
             <DoseTracker
               total={stats.total}
@@ -212,7 +176,6 @@ export default function EditMedicationScreen() {
           <Animated.View entering={FadeInDown.delay(100).duration(400)}>
             <View style={styles.card}>
               <Text style={styles.cardTitle}>اطلاعات دارو</Text>
-
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>نام دارو *</Text>
                 <TextInput
@@ -225,7 +188,6 @@ export default function EditMedicationScreen() {
                   returnKeyType="next"
                 />
               </View>
-
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>دوز *</Text>
                 <TextInput
@@ -238,7 +200,6 @@ export default function EditMedicationScreen() {
                   returnKeyType="next"
                 />
               </View>
-
               <View style={styles.row}>
                 <View style={[styles.inputGroup, { flex: 1 }]}>
                   <Text style={styles.inputLabel}>کل قرص‌ها *</Text>
@@ -246,23 +207,21 @@ export default function EditMedicationScreen() {
                     style={styles.input}
                     value={totalPills}
                     onChangeText={setTotalPills}
-                    placeholder="۳۰"
+                    placeholder="30"
                     placeholderTextColor="#C0C0CF"
                     keyboardType="number-pad"
                     textAlign="right"
                     returnKeyType="next"
                   />
                 </View>
-
                 <View style={styles.rowSpacer} />
-
                 <View style={[styles.inputGroup, { flex: 1 }]}>
                   <Text style={styles.inputLabel}>هر بار چند تا *</Text>
                   <TextInput
                     style={styles.input}
                     value={pillsPerDose}
                     onChangeText={setPillsPerDose}
-                    placeholder="۱"
+                    placeholder="1"
                     placeholderTextColor="#C0C0CF"
                     keyboardType="number-pad"
                     textAlign="right"
@@ -270,47 +229,36 @@ export default function EditMedicationScreen() {
                   />
                 </View>
               </View>
-
             </View>
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(200).duration(400)}>
             <View style={styles.card}>
               <Text style={styles.cardTitle}>زمان‌بندی</Text>
-              <TimePicker
-                times={times}
-                onTimesChange={setTimes}
-              />
+              <TimePicker times={times} onTimesChange={setTimes} />
             </View>
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(300).duration(400)}>
             <View style={styles.card}>
               <Text style={styles.cardTitle}>صدای یادآوری</Text>
-              <AudioRecorder
-                audioUri={audioUri}
-                onAudioChange={setAudioUri}
-              />
+              <AudioRecorder audioUri={audioUri} onAudioChange={setAudioUri} />
             </View>
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(400).duration(400)}>
             <TouchableOpacity
-              style={[
-                styles.saveButton,
-                isSaving && styles.saveButtonDisabled,
-              ]}
+              style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
               onPress={handleSave}
               disabled={isSaving}
             >
               <Text style={styles.saveButtonText}>
-                {isSaving ? 'در حال ذخیره...' : '✅ ذخیره تغییرات'}
+                {isSaving ? 'در حال ذخیره...' : 'ذخیره تغییرات'}
               </Text>
             </TouchableOpacity>
           </Animated.View>
 
           <View style={styles.bottomSpacing} />
-
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -318,15 +266,8 @@ export default function EditMedicationScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8F8FF',
-  },
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  container: { flex: 1, backgroundColor: '#F8F8FF' },
+  loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -340,37 +281,12 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  headerTitle: {
-    fontSize: 20,
-    fontFamily: 'Vazirmatn_Bold',
-    color: '#2D2D3A',
-  },
-  cancelButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 12,
-    backgroundColor: '#F0EFFF',
-  },
-  cancelButtonText: {
-    fontSize: 15,
-    fontFamily: 'Vazirmatn',
-    color: '#6C63FF',
-  },
-  deleteHeaderButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 12,
-    backgroundColor: '#FFF0F0',
-  },
-  deleteHeaderButtonText: {
-    fontSize: 15,
-    fontFamily: 'Vazirmatn',
-    color: '#FF6B6B',
-  },
-  scrollContent: {
-    padding: 16,
-    gap: 16,
-  },
+  headerTitle: { fontSize: 20, fontFamily: 'Vazirmatn_Bold', color: '#2D2D3A' },
+  cancelButton: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 12, backgroundColor: '#F0EFFF' },
+  cancelButtonText: { fontSize: 15, fontFamily: 'Vazirmatn', color: '#6C63FF' },
+  deleteHeaderButton: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 12, backgroundColor: '#FFF0F0' },
+  deleteHeaderButtonText: { fontSize: 15, fontFamily: 'Vazirmatn', color: '#FF6B6B' },
+  scrollContent: { padding: 16, gap: 16 },
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
@@ -382,22 +298,9 @@ const styles = StyleSheet.create({
     elevation: 3,
     gap: 12,
   },
-  cardTitle: {
-    fontSize: 18,
-    fontFamily: 'Vazirmatn_Bold',
-    color: '#2D2D3A',
-    textAlign: 'right',
-    marginBottom: 4,
-  },
-  inputGroup: {
-    gap: 6,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontFamily: 'Vazirmatn_Bold',
-    color: '#2D2D3A',
-    textAlign: 'right',
-  },
+  cardTitle: { fontSize: 18, fontFamily: 'Vazirmatn_Bold', color: '#2D2D3A', textAlign: 'right', marginBottom: 4 },
+  inputGroup: { gap: 6 },
+  inputLabel: { fontSize: 14, fontFamily: 'Vazirmatn_Bold', color: '#2D2D3A', textAlign: 'right' },
   input: {
     backgroundColor: '#F8F8FF',
     borderRadius: 14,
@@ -409,13 +312,8 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#E8E8F0',
   },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  rowSpacer: {
-    width: 12,
-  },
+  row: { flexDirection: 'row', alignItems: 'flex-start' },
+  rowSpacer: { width: 12 },
   saveButton: {
     backgroundColor: '#6C63FF',
     borderRadius: 20,
@@ -427,15 +325,7 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 8,
   },
-  saveButtonDisabled: {
-    opacity: 0.6,
-  },
-  saveButtonText: {
-    fontSize: 18,
-    fontFamily: 'Vazirmatn_Bold',
-    color: '#FFFFFF',
-  },
-  bottomSpacing: {
-    height: 20,
-  },
+  saveButtonDisabled: { opacity: 0.6 },
+  saveButtonText: { fontSize: 18, fontFamily: 'Vazirmatn_Bold', color: '#FFFFFF' },
+  bottomSpacing: { height: 20 },
 });
