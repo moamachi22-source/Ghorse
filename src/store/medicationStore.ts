@@ -7,7 +7,7 @@ import {
   updateMedication,
   deleteMedication,
   getRemainingDays,
-} from '@/database/medications';
+} from '../database/medications';
 
 interface MedicationStore {
   medications: Medication[];
