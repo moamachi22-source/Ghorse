@@ -13,7 +13,7 @@ workflows:
       - name: Prebuild
         script: npx expo prebuild --platform android --clean
       - name: Bundle JavaScript
-        script: cd android && mkdir -p app/src/main/assets && ../node_modules/.bin/react-native bundle --platform android --dev false --entry-file index.js --bundle-output app/src/main/assets/index.android.bundle --assets-dest app/src/main/res
+        script: cd android && mkdir -p app/src/main/assets && npx react-native bundle --platform android --dev false --entry-file node_modules/expo-router/entry.js --bundle-output app/src/main/assets/index.android.bundle --assets-dest app/src/main/res
       - name: Build Android Debug APK
         script: cd android && ./gradlew assembleDebug
     artifacts:
