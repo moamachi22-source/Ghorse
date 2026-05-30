@@ -20,7 +20,6 @@ import { TimePicker } from '../../src/components/TimePicker';
 import { AudioRecorder } from '../../src/components/AudioRecorder';
 import { DoseTracker } from '../../src/components/DoseTracker';
 import { getAdherenceStats } from '../../src/database/doses';
-import { scheduleMedicationNotifications, cancelMedicationNotifications } from '../../src/notifications/scheduler';
 import { toEnglishDigits } from '../../src/utils/persian';
 
 export default function EditMedicationScreen() {
@@ -36,11 +35,13 @@ export default function EditMedicationScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState({ total: 0, taken: 0, missed: 0, percentage: 0 });
 
-  useEffect(() => { if (id) loadMedication(); }, [id]);
+  useEffect(() => {
+    if (id) loadMedication();
+  }, [id]);
 
-  const loadMedication = () => {
+  const loadMedication = async () => {
     try {
-      const medication = getMedicationById(Number(id));
+      const medication = await getMedicationById(Number(id));
       if (!medication) {
         Alert.alert('خطا', 'دارو پیدا نشد');
         router.back();
@@ -52,7 +53,8 @@ export default function EditMedicationScreen() {
       setPillsPerDose(String(medication.pills_per_dose));
       setTimes(medication.times);
       setAudioUri(medication.audio_uri);
-      setStats(getAdherenceStats(Number(id)));
+      const adherenceStats = await getAdherenceStats(Number(id));
+      setStats(adherenceStats);
     } catch (error) {
       Alert.alert('خطا', 'مشکلی در بارگذاری پیش اومد');
       router.back();
@@ -90,8 +92,7 @@ export default function EditMedicationScreen() {
     if (isSaving) return;
     setIsSaving(true);
     try {
-      const medicationId = Number(id);
-      updateMedication(medicationId, {
+      await updateMedication(Number(id), {
         name: name.trim(),
         dose: dose.trim(),
         total_pills: Number(toEnglishDigits(totalPills)),
@@ -100,11 +101,6 @@ export default function EditMedicationScreen() {
         times,
         audio_uri: audioUri,
       });
-      await cancelMedicationNotifications(medicationId);
-      const updated = getMedicationById(medicationId);
-      if (updated) {
-        await scheduleMedicationNotifications(updated);
-      }
       Alert.alert(
         'ذخیره شد',
         name + ' با موفقیت ویرایش شد',
@@ -120,15 +116,14 @@ export default function EditMedicationScreen() {
   const handleDelete = () => {
     Alert.alert(
       'حذف دارو',
-      'آیا مطمئنی که میخوای ' + name + ' رو حذف کنی؟ تاریخچه مصرف هم پاک میشه.',
+      'آیا مطمئنی که میخوای ' + name + ' رو حذف کنی؟',
       [
         { text: 'لغو', style: 'cancel' },
         {
           text: 'حذف',
           style: 'destructive',
           onPress: async () => {
-            await cancelMedicationNotifications(Number(id));
-            deleteMedication(Number(id));
+            await deleteMedication(Number(id));
             router.back();
           },
         },
@@ -185,7 +180,6 @@ export default function EditMedicationScreen() {
                   placeholder="مثلاً: متفورمین"
                   placeholderTextColor="#C0C0CF"
                   textAlign="right"
-                  returnKeyType="next"
                 />
               </View>
               <View style={styles.inputGroup}>
@@ -197,7 +191,6 @@ export default function EditMedicationScreen() {
                   placeholder="مثلاً: 500mg"
                   placeholderTextColor="#C0C0CF"
                   textAlign="right"
-                  returnKeyType="next"
                 />
               </View>
               <View style={styles.row}>
@@ -211,7 +204,6 @@ export default function EditMedicationScreen() {
                     placeholderTextColor="#C0C0CF"
                     keyboardType="number-pad"
                     textAlign="right"
-                    returnKeyType="next"
                   />
                 </View>
                 <View style={styles.rowSpacer} />
@@ -225,7 +217,6 @@ export default function EditMedicationScreen() {
                     placeholderTextColor="#C0C0CF"
                     keyboardType="number-pad"
                     textAlign="right"
-                    returnKeyType="done"
                   />
                 </View>
               </View>
@@ -327,5 +318,5 @@ const styles = StyleSheet.create({
   },
   saveButtonDisabled: { opacity: 0.6 },
   saveButtonText: { fontSize: 18, fontFamily: 'Vazirmatn_Bold', color: '#FFFFFF' },
-  bottomSpacing: { height: 20 },
+  bottomSpacing: { height: 40 },
 });
