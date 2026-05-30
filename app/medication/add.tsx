@@ -16,8 +16,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMedicationStore } from '../../src/store/medicationStore';
 import { TimePicker } from '../../src/components/TimePicker';
 import { AudioRecorder } from '../../src/components/AudioRecorder';
-import { scheduleMedicationNotifications } from '../../src/notifications/scheduler';
-import { getMedicationById } from '../../src/database/medications';
 import { toEnglishDigits } from '../../src/utils/persian';
 
 export default function AddMedicationScreen() {
@@ -27,7 +25,6 @@ export default function AddMedicationScreen() {
   const [totalPills, setTotalPills] = useState('');
   const [pillsPerDose, setPillsPerDose] = useState('1');
   const [times, setTimes] = useState<string[]>([]);
-  const [startDate] = useState(new Date().toISOString().split('T')[0]);
   const [audioUri, setAudioUri] = useState<string | undefined>(undefined);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -60,20 +57,16 @@ export default function AddMedicationScreen() {
     if (isSaving) return;
     setIsSaving(true);
     try {
-      const id = addMedication({
+      const id = await addMedication({
         name: name.trim(),
         dose: dose.trim(),
         total_pills: Number(toEnglishDigits(totalPills)),
         pills_per_dose: Number(toEnglishDigits(pillsPerDose)),
-        start_date: startDate,
+        start_date: new Date().toISOString().split('T')[0],
         times,
         audio_uri: audioUri,
       });
       if (id > 0) {
-        const medication = getMedicationById(id);
-        if (medication) {
-          await scheduleMedicationNotifications(medication);
-        }
         Alert.alert(
           'ذخیره شد',
           name + ' با موفقیت اضافه شد',
@@ -117,7 +110,6 @@ export default function AddMedicationScreen() {
                   placeholder="مثلاً: متفورمین"
                   placeholderTextColor="#C0C0CF"
                   textAlign="right"
-                  returnKeyType="next"
                 />
               </View>
               <View style={styles.inputGroup}>
@@ -129,7 +121,6 @@ export default function AddMedicationScreen() {
                   placeholder="مثلاً: 500mg"
                   placeholderTextColor="#C0C0CF"
                   textAlign="right"
-                  returnKeyType="next"
                 />
               </View>
               <View style={styles.row}>
@@ -143,7 +134,6 @@ export default function AddMedicationScreen() {
                     placeholderTextColor="#C0C0CF"
                     keyboardType="number-pad"
                     textAlign="right"
-                    returnKeyType="next"
                   />
                 </View>
                 <View style={styles.rowSpacer} />
@@ -157,7 +147,6 @@ export default function AddMedicationScreen() {
                     placeholderTextColor="#C0C0CF"
                     keyboardType="number-pad"
                     textAlign="right"
-                    returnKeyType="done"
                   />
                 </View>
               </View>
@@ -257,5 +246,5 @@ const styles = StyleSheet.create({
   },
   saveButtonDisabled: { opacity: 0.6 },
   saveButtonText: { fontSize: 18, fontFamily: 'Vazirmatn_Bold', color: '#FFFFFF' },
-  bottomSpacing: { height: 20 },
+  bottomSpacing: { height: 40 },
 });
