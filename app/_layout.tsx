@@ -7,7 +7,6 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -17,12 +16,10 @@ export default function RootLayout() {
         initDatabase();
       } catch (e: any) {
         setError('DB: ' + e.message);
-        return;
       }
       try {
         await SplashScreen.hideAsync();
       } catch (e) {}
-      setReady(true);
     };
     setup();
   }, []);
@@ -35,10 +32,6 @@ export default function RootLayout() {
         </ScrollView>
       </View>
     );
-  }
-
-  if (!ready) {
-    return <View style={{ flex: 1, backgroundColor: '#6C63FF' }} />;
   }
 
   return (
