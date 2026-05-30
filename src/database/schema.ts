@@ -1,6 +1,6 @@
 import * as SQLite from 'expo-sqlite';
 
-const db = SQLite.openDatabase('ghors.db');
+export const db = SQLite.openDatabase('ghors.db');
 
 export const initDatabase = (): void => {
   db.transaction((tx) => {
@@ -29,5 +29,3 @@ export const initDatabase = (): void => {
     `);
   });
 };
-
-export { db };
