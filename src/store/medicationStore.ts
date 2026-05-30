@@ -8,38 +8,57 @@ import {
   deleteMedication,
   getRemainingDays,
 } from '../database/medications';
+import { getAdherenceStats } from '../database/doses';
 
 interface MedicationStore {
   medications: Medication[];
   isLoading: boolean;
   error: string | null;
-  loadMedications: () => void;
-  addMedication: (input: MedicationInput) => number;
-  updateMedication: (id: number, input: MedicationInput) => void;
-  deleteMedication: (id: number) => void;
+  takenDosesMap: Record<number, number>;
+  loadMedications: () => Promise<void>;
+  addMedication: (input: MedicationInput) => Promise<number>;
+  updateMedication: (id: number, input: MedicationInput) => Promise<void>;
+  deleteMedication: (id: number) => Promise<void>;
   getRemainingDays: (medication: Medication) => number;
+  loadTakenDoses: (medications: Medication[]) => Promise<void>;
 }
 
-export const useMedicationStore = create<MedicationStore>((set) => ({
+export const useMedicationStore = create<MedicationStore>((set, get) => ({
   medications: [],
   isLoading: false,
   error: null,
+  takenDosesMap: {},
 
-  loadMedications: () => {
+  loadMedications: async () => {
     set({ isLoading: true, error: null });
     try {
-      const medications = getAllMedications();
+      const medications = await getAllMedications();
       set({ medications, isLoading: false });
+      await get().loadTakenDoses(medications);
     } catch (error) {
       set({ error: 'خطا در بارگذاری داروها', isLoading: false });
     }
   },
 
-  addMedication: (input: MedicationInput) => {
+  loadTakenDoses: async (medications: Medication[]) => {
+    const map: Record<number, number> = {};
+    for (const med of medications) {
+      try {
+        const stats = await getAdherenceStats(med.id);
+        map[med.id] = stats.taken;
+      } catch (e) {
+        map[med.id] = 0;
+      }
+    }
+    set({ takenDosesMap: map });
+  },
+
+  addMedication: async (input: MedicationInput) => {
     try {
-      const id = addMedication(input);
-      const medications = getAllMedications();
+      const id = await addMedication(input);
+      const medications = await getAllMedications();
       set({ medications });
+      await get().loadTakenDoses(medications);
       return id;
     } catch (error) {
       set({ error: 'خطا در افزودن دارو' });
@@ -47,27 +66,30 @@ export const useMedicationStore = create<MedicationStore>((set) => ({
     }
   },
 
-  updateMedication: (id: number, input: MedicationInput) => {
+  updateMedication: async (id: number, input: MedicationInput) => {
     try {
-      updateMedication(id, input);
-      const medications = getAllMedications();
+      await updateMedication(id, input);
+      const medications = await getAllMedications();
       set({ medications });
+      await get().loadTakenDoses(medications);
     } catch (error) {
       set({ error: 'خطا در ویرایش دارو' });
     }
   },
 
-  deleteMedication: (id: number) => {
+  deleteMedication: async (id: number) => {
     try {
-      deleteMedication(id);
-      const medications = getAllMedications();
+      await deleteMedication(id);
+      const medications = await getAllMedications();
       set({ medications });
+      await get().loadTakenDoses(medications);
     } catch (error) {
       set({ error: 'خطا در حذف دارو' });
     }
   },
 
   getRemainingDays: (medication: Medication) => {
-    return getRemainingDays(medication);
+    const takenCount = get().takenDosesMap[medication.id] ?? 0;
+    return getRemainingDays(medication, takenCount);
   },
 }));
