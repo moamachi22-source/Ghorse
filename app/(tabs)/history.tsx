@@ -11,7 +11,7 @@ import { toPersianDigits, formatTime, getShortDate } from '../../src/utils/persi
 interface MedicationWithStats {
   medication: Medication;
   doses: Dose[];
-  stats: { total: number; taken: number; missed: number; percentage: number; };
+  stats: { total: number; taken: number; missed: number; percentage: number };
 }
 
 export default function HistoryScreen() {
@@ -20,16 +20,21 @@ export default function HistoryScreen() {
 
   useFocusEffect(useCallback(() => { loadData(); }, []));
 
-  const loadData = () => {
-    const medications = getAllMedications();
-    const result: MedicationWithStats[] = medications.map((med) => ({
-      medication: med,
-      doses: getDosesByMedication(med.id).slice(0, 20),
-      stats: getAdherenceStats(med.id),
-    }));
-    setData(result);
-    if (result.length > 0 && selectedMedId === null) {
-      setSelectedMedId(result[0].medication.id);
+  const loadData = async () => {
+    try {
+      const medications = await getAllMedications();
+      const result: MedicationWithStats[] = [];
+      for (const med of medications) {
+        const doses = await getDosesByMedication(med.id);
+        const stats = await getAdherenceStats(med.id);
+        result.push({ medication: med, doses: doses.slice(0, 20), stats });
+      }
+      setData(result);
+      if (result.length > 0 && selectedMedId === null) {
+        setSelectedMedId(result[0].medication.id);
+      }
+    } catch (e) {
+      console.error('History load error:', e);
     }
   };
 
@@ -64,7 +69,7 @@ export default function HistoryScreen() {
         </Text>
         {item.taken_at && (
           <Text style={styles.doseTakenAt}>
-            خورده شده در {formatTime(new Date(item.taken_at).toTimeString().slice(0, 5))}
+            در {formatTime(new Date(item.taken_at).toTimeString().slice(0, 5))}
           </Text>
         )}
       </View>
@@ -80,7 +85,7 @@ export default function HistoryScreen() {
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyEmoji}>📋</Text>
           <Text style={styles.emptyTitle}>هنوز داروی ثبت نشده</Text>
-          <Text style={styles.emptySubtitle}>بعد از اضافه کردن دارو و ثبت مصرف، تاریخچه اینجا نشون داده میشه</Text>
+          <Text style={styles.emptySubtitle}>بعد از ثبت مصرف، تاریخچه اینجا نشون داده میشه</Text>
         </View>
       </SafeAreaView>
     );
@@ -91,6 +96,7 @@ export default function HistoryScreen() {
       <Animated.View entering={FadeInDown.duration(400)} style={styles.header}>
         <Text style={styles.headerTitle}>تاریخچه مصرف</Text>
       </Animated.View>
+
       <Animated.View entering={FadeInDown.delay(100).duration(400)} style={styles.medicationTabs}>
         <FlatList
           data={data}
@@ -110,6 +116,7 @@ export default function HistoryScreen() {
           )}
         />
       </Animated.View>
+
       {selectedData && (
         <>
           <Animated.View entering={FadeInDown.delay(200).duration(400)}>
@@ -163,7 +170,7 @@ const styles = StyleSheet.create({
   medicationTabTextActive: { color: '#FFFFFF', fontFamily: 'Vazirmatn_Bold' },
   dosesHeader: { paddingHorizontal: 20, paddingVertical: 12, alignItems: 'flex-end' },
   dosesTitle: { fontSize: 16, fontFamily: 'Vazirmatn_Bold', color: '#2D2D3A' },
-  dosesList: { paddingHorizontal: 16, paddingBottom: 32, gap: 8 },
+  dosesList: { paddingHorizontal: 16, paddingBottom: 100, gap: 8 },
   doseItem: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
