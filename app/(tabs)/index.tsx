@@ -1,90 +1,74 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, Alert } from 'react-native';
+import React, { useEffect, useCallback } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  RefreshControl,
+  Alert,
+} from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMedicationStore } from '../../src/store/medicationStore';
 import { MedicationCard } from '../../src/components/MedicationCard';
 import { Medication } from '../../src/database/medications';
-import { addDose, getDoseByScheduledTime, markDoseTaken, getAdherenceStats } from '../../src/database/doses';
-import { scheduleMedicationNotifications, scheduleLowStockNotification } from '../../src/notifications/scheduler';
+import { addDose, getDoseByScheduledTime, markDoseTaken } from '../../src/database/doses';
 import { toPersianDigits } from '../../src/utils/persian';
-import { isLowStock, getNextDoseTime } from '../../src/utils/calculations';
+import { getNextDoseTime } from '../../src/utils/calculations';
 
 export default function HomeScreen() {
-  const { medications, isLoading, loadMedications, deleteMedication, getRemainingDays } = useMedicationStore();
-  const [refreshing, setRefreshing] = useState(false);
-  const [takenDosesMap, setTakenDosesMap] = useState<Record<number, number>>({});
+  const {
+    medications,
+    isLoading,
+    loadMedications,
+    deleteMedication,
+    getRemainingDays,
+    takenDosesMap,
+  } = useMedicationStore();
 
   useFocusEffect(
     useCallback(() => {
       loadMedications();
-      loadTakenDoses();
     }, [])
   );
 
-  const loadTakenDoses = () => {
-    const map: Record<number, number> = {};
-    medications.forEach((med) => {
-      const stats = getAdherenceStats(med.id);
-      map[med.id] = stats.taken;
-    });
-    setTakenDosesMap(map);
+  const handleEdit = (id: number) => {
+    router.push('/medication/' + id);
   };
 
-  useEffect(() => { loadTakenDoses(); }, [medications]);
-
-  useEffect(() => { checkLowStockAlerts(); }, [medications]);
-
-  const checkLowStockAlerts = async () => {
-    for (const med of medications) {
-      const remaining = getRemainingDays(med);
-      const taken = takenDosesMap[med.id] ? takenDosesMap[med.id] : 0;
-      if (isLowStock(med.total_pills, med.pills_per_dose, med.times.length, taken)) {
-        await scheduleLowStockNotification(med, remaining);
-      }
-    }
+  const handleDelete = async (id: number) => {
+    await deleteMedication(id);
   };
 
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    loadMedications();
-    loadTakenDoses();
-    setRefreshing(false);
-  }, []);
-
-  const handleEdit = (id: number) => { router.push('/medication/' + id); };
-
-  const handleDelete = (id: number) => { deleteMedication(id); };
-
-  const handleMarkTaken = (medication: Medication) => {
+  const handleMarkTaken = async (medication: Medication) => {
     const nextTime = getNextDoseTime(medication.times);
     if (!nextTime) return;
     const scheduledTime = new Date();
     const [hour, minute] = nextTime.split(':').map(Number);
     scheduledTime.setHours(hour, minute, 0, 0);
-    const existing = getDoseByScheduledTime(medication.id, scheduledTime.toISOString());
-    if (existing && existing.status === 'taken') {
-      Alert.alert('توجه', 'این دوز قبلاً ثبت شده');
-      return;
+    try {
+      const existing = await getDoseByScheduledTime(medication.id, scheduledTime.toISOString());
+      if (existing && existing.status === 'taken') {
+        Alert.alert('توجه', 'این دوز قبلاً ثبت شده');
+        return;
+      }
+      if (existing) {
+        await markDoseTaken(existing.id);
+      } else {
+        const doseId = await addDose(medication.id, scheduledTime.toISOString());
+        await markDoseTaken(doseId);
+      }
+      await loadMedications();
+      Alert.alert('ثبت شد', 'مصرف ' + medication.name + ' ثبت شد', [{ text: 'باشه' }]);
+    } catch (e) {
+      Alert.alert('خطا', 'مشکلی در ثبت پیش اومد');
     }
-    if (existing) {
-      markDoseTaken(existing.id);
-    } else {
-      const doseId = addDose(medication.id, scheduledTime.toISOString());
-      markDoseTaken(doseId);
-    }
-    loadTakenDoses();
-    Alert.alert('ثبت شد', 'مصرف ' + medication.name + ' ثبت شد', [{ text: 'باشه' }]);
   };
 
-  const getTodayDoseInfo = () => {
-    const total = medications.reduce((sum, med) => sum + med.times.length, 0);
-    const taken = Object.values(takenDosesMap).reduce((sum, val) => sum + val, 0);
-    return { total, taken };
-  };
-
-  const { total: todayTotal, taken: todayTaken } = getTodayDoseInfo();
+  const todayTotal = medications.reduce((sum, med) => sum + med.times.length, 0);
+  const todayTaken = Object.values(takenDosesMap).reduce((sum, val) => sum + val, 0);
 
   const renderEmpty = () => (
     <Animated.View entering={FadeIn.duration(600)} style={styles.emptyContainer}>
@@ -114,7 +98,9 @@ export default function HomeScreen() {
           </View>
           <View style={styles.summaryDivider} />
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryValue}>{toPersianDigits(todayTaken)}/{toPersianDigits(todayTotal)}</Text>
+            <Text style={styles.summaryValue}>
+              {toPersianDigits(todayTaken)}/{toPersianDigits(todayTotal)}
+            </Text>
             <Text style={styles.summaryLabel}>دوز امروز</Text>
           </View>
           <View style={styles.summaryDivider} />
@@ -134,7 +120,7 @@ export default function HomeScreen() {
           <MedicationCard
             medication={item}
             remainingDays={getRemainingDays(item)}
-            takenDoses={takenDosesMap[item.id] ? takenDosesMap[item.id] : 0}
+            takenDoses={takenDosesMap[item.id] ?? 0}
             onEdit={handleEdit}
             onDelete={handleDelete}
             onMarkTaken={handleMarkTaken}
@@ -142,9 +128,14 @@ export default function HomeScreen() {
           />
         )}
         ListEmptyComponent={renderEmpty}
-        contentContainerStyle={[styles.listContent, medications.length === 0 && styles.listContentEmpty]}
+        contentContainerStyle={[
+          styles.listContent,
+          medications.length === 0 && styles.listContentEmpty,
+        ]}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6C63FF" />}
+        refreshControl={
+          <RefreshControl refreshing={isLoading} onRefresh={loadMedications} tintColor="#6C63FF" />
+        }
       />
     </SafeAreaView>
   );
@@ -199,7 +190,7 @@ const styles = StyleSheet.create({
   summaryValue: { fontSize: 24, fontFamily: 'Vazirmatn_Bold', color: '#FFFFFF' },
   summaryLabel: { fontSize: 12, fontFamily: 'Vazirmatn', color: 'rgba(255,255,255,0.8)', marginTop: 4 },
   summaryDivider: { width: 1, backgroundColor: 'rgba(255,255,255,0.3)', marginVertical: 4 },
-  listContent: { paddingVertical: 16, paddingBottom: 32 },
+  listContent: { paddingVertical: 16, paddingBottom: 100 },
   listContentEmpty: { flex: 1 },
   emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40 },
   emptyEmoji: { fontSize: 64, marginBottom: 16 },
