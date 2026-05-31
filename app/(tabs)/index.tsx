@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -17,30 +17,19 @@ import { Medication } from '../../src/database/medications';
 import { addDose, getDoseByScheduledTime, markDoseTaken } from '../../src/database/doses';
 import { toPersianDigits } from '../../src/utils/persian';
 import { getNextDoseTime } from '../../src/utils/calculations';
+import { useTheme } from '../../src/theme/ThemeContext';
+import { RewardAnimation } from '../../src/components/RewardAnimation';
 
 export default function HomeScreen() {
-  const {
-    medications,
-    isLoading,
-    loadMedications,
-    deleteMedication,
-    getRemainingDays,
-    takenDosesMap,
-  } = useMedicationStore();
+  const { medications, isLoading, loadMedications, deleteMedication, getRemainingDays, takenDosesMap } = useMedicationStore();
+  const { theme, fontSize } = useTheme();
+  const [rewardVisible, setRewardVisible] = useState(false);
+  const [rewardPercentage, setRewardPercentage] = useState(0);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadMedications();
-    }, [])
-  );
+  useFocusEffect(useCallback(() => { loadMedications(); }, []));
 
-  const handleEdit = (id: number) => {
-    router.push('/medication/' + id);
-  };
-
-  const handleDelete = async (id: number) => {
-    await deleteMedication(id);
-  };
+  const handleEdit = (id: number) => { router.push('/medication/' + id); };
+  const handleDelete = async (id: number) => { await deleteMedication(id); };
 
   const handleMarkTaken = async (medication: Medication) => {
     const nextTime = getNextDoseTime(medication.times);
@@ -61,7 +50,11 @@ export default function HomeScreen() {
         await markDoseTaken(doseId);
       }
       await loadMedications();
-      Alert.alert('ثبت شد', 'مصرف ' + medication.name + ' ثبت شد', [{ text: 'باشه' }]);
+      const todayTotal = medications.reduce((sum, med) => sum + med.times.length, 0);
+      const todayTakenNew = Object.values(takenDosesMap).reduce((sum, val) => sum + val, 0) + 1;
+      const percentage = todayTotal > 0 ? Math.round((todayTakenNew / todayTotal) * 100) : 0;
+      setRewardPercentage(percentage);
+      setRewardVisible(true);
     } catch (e) {
       Alert.alert('خطا', 'مشکلی در ثبت پیش اومد');
     }
@@ -73,42 +66,46 @@ export default function HomeScreen() {
   const renderEmpty = () => (
     <Animated.View entering={FadeIn.duration(600)} style={styles.emptyContainer}>
       <Text style={styles.emptyEmoji}>💊</Text>
-      <Text style={styles.emptyTitle}>هنوز داروی اضافه نشده</Text>
-      <Text style={styles.emptySubtitle}>روی دکمه + بزنید تا اولین دارو رو اضافه کنید</Text>
+      <Text style={[styles.emptyTitle, { color: theme.text, fontSize: fontSize + 4 }]}>
+        هنوز داروی اضافه نشده
+      </Text>
+      <Text style={[styles.emptySubtitle, { color: theme.textLight, fontSize }]}>
+        روی دکمه + پایین صفحه بزنید
+      </Text>
     </Animated.View>
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <Animated.View entering={FadeInDown.duration(400)} style={styles.header}>
-        <TouchableOpacity style={styles.addButton} onPress={() => router.push('/medication/add')}>
-          <Text style={styles.addButtonText}>+</Text>
-        </TouchableOpacity>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
+
+      <Animated.View entering={FadeInDown.duration(400)} style={[styles.header, { backgroundColor: theme.card, shadowColor: theme.shadow }]}>
         <View style={styles.headerTitles}>
-          <Text style={styles.headerTitle}>داروهای من</Text>
-          <Text style={styles.headerSubtitle}>قرص — یادآور هوشمند</Text>
+          <Text style={[styles.headerTitle, { color: theme.text, fontSize: fontSize + 8 }]}>داروهای من</Text>
+          <Text style={[styles.headerSubtitle, { color: theme.textLight, fontSize: fontSize - 2 }]}>
+            قرص — یادآور هوشمند
+          </Text>
         </View>
       </Animated.View>
 
       {medications.length > 0 && (
-        <Animated.View entering={FadeInDown.delay(100).duration(400)} style={styles.summaryCard}>
+        <Animated.View entering={FadeInDown.delay(100).duration(400)} style={[styles.summaryCard, { backgroundColor: theme.primary, shadowColor: theme.shadow }]}>
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryValue}>{toPersianDigits(medications.length)}</Text>
-            <Text style={styles.summaryLabel}>دارو فعال</Text>
+            <Text style={[styles.summaryValue, { fontSize: fontSize + 8 }]}>{toPersianDigits(medications.length)}</Text>
+            <Text style={[styles.summaryLabel, { fontSize: fontSize - 2 }]}>دارو فعال</Text>
           </View>
           <View style={styles.summaryDivider} />
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryValue}>
+            <Text style={[styles.summaryValue, { fontSize: fontSize + 8 }]}>
               {toPersianDigits(todayTaken)}/{toPersianDigits(todayTotal)}
             </Text>
-            <Text style={styles.summaryLabel}>دوز امروز</Text>
+            <Text style={[styles.summaryLabel, { fontSize: fontSize - 2 }]}>دوز امروز</Text>
           </View>
           <View style={styles.summaryDivider} />
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryValue}>
+            <Text style={[styles.summaryValue, { fontSize: fontSize + 8 }]}>
               {todayTotal > 0 ? toPersianDigits(Math.round((todayTaken / todayTotal) * 100)) : toPersianDigits(0)}٪
             </Text>
-            <Text style={styles.summaryLabel}>پایبندی</Text>
+            <Text style={[styles.summaryLabel, { fontSize: fontSize - 2 }]}>پایبندی</Text>
           </View>
         </Animated.View>
       )}
@@ -128,72 +125,76 @@ export default function HomeScreen() {
           />
         )}
         ListEmptyComponent={renderEmpty}
-        contentContainerStyle={[
-          styles.listContent,
-          medications.length === 0 && styles.listContentEmpty,
-        ]}
+        contentContainerStyle={[styles.listContent, medications.length === 0 && styles.listContentEmpty]}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={loadMedications} tintColor="#6C63FF" />
-        }
+        refreshControl={<RefreshControl refreshing={isLoading} onRefresh={loadMedications} tintColor={theme.primary} />}
+      />
+
+      <TouchableOpacity
+        style={[styles.fab, { backgroundColor: theme.primary, shadowColor: theme.shadow }]}
+        onPress={() => router.push('/medication/add')}
+      >
+        <Text style={styles.fabText}>+</Text>
+      </TouchableOpacity>
+
+      <RewardAnimation
+        visible={rewardVisible}
+        percentage={rewardPercentage}
+        streak={1}
+        onClose={() => setRewardVisible(false)}
       />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8F8FF' },
+  container: { flex: 1 },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#6C63FF',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 3,
+    alignItems: 'flex-end',
   },
   headerTitles: { alignItems: 'flex-end' },
-  headerTitle: { fontSize: 24, fontFamily: 'Vazirmatn_Bold', color: '#2D2D3A' },
-  headerSubtitle: { fontSize: 13, fontFamily: 'Vazirmatn', color: '#9E9EA7', marginTop: 2 },
-  addButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    backgroundColor: '#6C63FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#6C63FF',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  addButtonText: { color: '#FFFFFF', fontSize: 28, lineHeight: 32 },
+  headerTitle: { fontFamily: 'Vazirmatn_Bold' },
+  headerSubtitle: { fontFamily: 'Vazirmatn', marginTop: 2 },
   summaryCard: {
     flexDirection: 'row',
-    backgroundColor: '#6C63FF',
     marginHorizontal: 16,
     marginTop: 16,
     borderRadius: 20,
     padding: 16,
-    shadowColor: '#6C63FF',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 16,
     elevation: 8,
   },
   summaryItem: { flex: 1, alignItems: 'center' },
-  summaryValue: { fontSize: 24, fontFamily: 'Vazirmatn_Bold', color: '#FFFFFF' },
-  summaryLabel: { fontSize: 12, fontFamily: 'Vazirmatn', color: 'rgba(255,255,255,0.8)', marginTop: 4 },
+  summaryValue: { fontFamily: 'Vazirmatn_Bold', color: '#FFFFFF' },
+  summaryLabel: { fontFamily: 'Vazirmatn', color: 'rgba(255,255,255,0.85)', marginTop: 4 },
   summaryDivider: { width: 1, backgroundColor: 'rgba(255,255,255,0.3)', marginVertical: 4 },
-  listContent: { paddingVertical: 16, paddingBottom: 100 },
+  listContent: { paddingVertical: 16, paddingBottom: 120 },
   listContentEmpty: { flex: 1 },
   emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40 },
   emptyEmoji: { fontSize: 64, marginBottom: 16 },
-  emptyTitle: { fontSize: 20, fontFamily: 'Vazirmatn_Bold', color: '#2D2D3A', textAlign: 'center', marginBottom: 8 },
-  emptySubtitle: { fontSize: 15, fontFamily: 'Vazirmatn', color: '#9E9EA7', textAlign: 'center', lineHeight: 24 },
+  emptyTitle: { fontFamily: 'Vazirmatn_Bold', textAlign: 'center', marginBottom: 8 },
+  emptySubtitle: { fontFamily: 'Vazirmatn', textAlign: 'center', lineHeight: 24 },
+  fab: {
+    position: 'absolute',
+    bottom: 90,
+    right: 20,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 10,
+  },
+  fabText: { color: '#FFFFFF', fontSize: 36, lineHeight: 42 },
 });
