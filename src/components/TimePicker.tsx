@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import { toPersianDigits } from '../utils/persian';
+import { useTheme } from '../theme/ThemeContext';
 
 interface TimePickerProps {
   times: string[];
@@ -8,12 +9,13 @@ interface TimePickerProps {
 }
 
 export const TimePicker: React.FC<TimePickerProps> = ({ times, onTimesChange }) => {
+  const { theme, fontSize } = useTheme();
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedHour, setSelectedHour] = useState(8);
   const [selectedMinute, setSelectedMinute] = useState(0);
 
   const hours = Array.from({ length: 24 }, (_, i) => i);
-  const minutes = [0, 15, 30, 45];
+  const minutes = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
 
   const handleAddTime = () => {
     const timeString = String(selectedHour).padStart(2, '0') + ':' + String(selectedMinute).padStart(2, '0');
@@ -37,46 +39,61 @@ export const TimePicker: React.FC<TimePickerProps> = ({ times, onTimesChange }) 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.label}>زمان‌های مصرف</Text>
-        <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
-          <Text style={styles.addButtonText}>+ افزودن زمان</Text>
+        <Text style={[styles.label, { color: theme.text, fontSize }]}>زمان‌های مصرف</Text>
+        <TouchableOpacity
+          style={[styles.addButton, { backgroundColor: theme.primary }]}
+          onPress={() => setModalVisible(true)}
+        >
+          <Text style={[styles.addButtonText, { fontSize }]}>+ افزودن زمان</Text>
         </TouchableOpacity>
       </View>
+
       <View style={styles.timesList}>
         {times.length === 0 && (
-          <Text style={styles.emptyText}>هنوز زمانی اضافه نشده</Text>
+          <Text style={[styles.emptyText, { color: theme.textLight, fontSize }]}>
+            هنوز زمانی اضافه نشده
+          </Text>
         )}
         {times.map((time, index) => (
-          <View key={index} style={styles.timeItem}>
-            <TouchableOpacity style={styles.removeButton} onPress={() => handleRemoveTime(time)}>
-              <Text style={styles.removeButtonText}>x</Text>
+          <View key={index} style={[styles.timeItem, { backgroundColor: theme.primaryLight }]}>
+            <TouchableOpacity
+              style={[styles.removeButton, { backgroundColor: theme.danger }]}
+              onPress={() => handleRemoveTime(time)}
+            >
+              <Text style={styles.removeButtonText}>×</Text>
             </TouchableOpacity>
-            <Text style={styles.timeText}>{formatDisplayTime(time)}</Text>
+            <Text style={[styles.timeText, { color: theme.primary, fontSize: fontSize + 2 }]}>
+              {formatDisplayTime(time)}
+            </Text>
           </View>
         ))}
       </View>
 
-      <Modal
-        visible={modalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}
-      >
+      <Modal visible={modalVisible} transparent animationType="slide" onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>انتخاب زمان</Text>
+          <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
+            <Text style={[styles.modalTitle, { color: theme.text, fontSize: fontSize + 4 }]}>
+              انتخاب زمان
+            </Text>
 
             <View style={styles.pickerContainer}>
               <View style={styles.pickerColumn}>
-                <Text style={styles.pickerLabel}>دقیقه</Text>
+                <Text style={[styles.pickerLabel, { color: theme.textLight, fontSize }]}>دقیقه</Text>
                 <ScrollView style={styles.pickerScroll} showsVerticalScrollIndicator={false}>
                   {minutes.map((min) => (
                     <TouchableOpacity
                       key={min}
-                      style={[styles.pickerItem, selectedMinute === min && styles.pickerItemSelected]}
+                      style={[
+                        styles.pickerItem,
+                        selectedMinute === min && { backgroundColor: theme.primary },
+                      ]}
                       onPress={() => setSelectedMinute(min)}
                     >
-                      <Text style={[styles.pickerItemText, selectedMinute === min && styles.pickerItemTextSelected]}>
+                      <Text style={[
+                        styles.pickerItemText,
+                        { color: theme.text, fontSize: fontSize + 4 },
+                        selectedMinute === min && { color: '#FFFFFF' },
+                      ]}>
                         {toPersianDigits(String(min).padStart(2, '0'))}
                       </Text>
                     </TouchableOpacity>
@@ -84,18 +101,25 @@ export const TimePicker: React.FC<TimePickerProps> = ({ times, onTimesChange }) 
                 </ScrollView>
               </View>
 
-              <Text style={styles.pickerSeparator}>:</Text>
+              <Text style={[styles.pickerSeparator, { color: theme.text, fontSize: fontSize + 12 }]}>:</Text>
 
               <View style={styles.pickerColumn}>
-                <Text style={styles.pickerLabel}>ساعت</Text>
+                <Text style={[styles.pickerLabel, { color: theme.textLight, fontSize }]}>ساعت</Text>
                 <ScrollView style={styles.pickerScroll} showsVerticalScrollIndicator={false}>
                   {hours.map((hour) => (
                     <TouchableOpacity
                       key={hour}
-                      style={[styles.pickerItem, selectedHour === hour && styles.pickerItemSelected]}
+                      style={[
+                        styles.pickerItem,
+                        selectedHour === hour && { backgroundColor: theme.primary },
+                      ]}
                       onPress={() => setSelectedHour(hour)}
                     >
-                      <Text style={[styles.pickerItemText, selectedHour === hour && styles.pickerItemTextSelected]}>
+                      <Text style={[
+                        styles.pickerItemText,
+                        { color: theme.text, fontSize: fontSize + 4 },
+                        selectedHour === hour && { color: '#FFFFFF' },
+                      ]}>
                         {toPersianDigits(String(hour).padStart(2, '0'))}
                       </Text>
                     </TouchableOpacity>
@@ -104,12 +128,24 @@ export const TimePicker: React.FC<TimePickerProps> = ({ times, onTimesChange }) 
               </View>
             </View>
 
+            <View style={[styles.selectedTime, { backgroundColor: theme.primaryLight }]}>
+              <Text style={[styles.selectedTimeText, { color: theme.primary, fontSize: fontSize + 6 }]}>
+                {toPersianDigits(String(selectedHour).padStart(2, '0'))}:{toPersianDigits(String(selectedMinute).padStart(2, '0'))}
+              </Text>
+            </View>
+
             <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.cancelButton} onPress={() => setModalVisible(false)}>
-                <Text style={styles.cancelButtonText}>لغو</Text>
+              <TouchableOpacity
+                style={[styles.cancelButton, { backgroundColor: theme.primaryLight }]}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={[styles.cancelButtonText, { color: theme.primary, fontSize }]}>لغو</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.confirmButton} onPress={handleAddTime}>
-                <Text style={styles.confirmButtonText}>تأیید</Text>
+              <TouchableOpacity
+                style={[styles.confirmButton, { backgroundColor: theme.primary }]}
+                onPress={handleAddTime}
+              >
+                <Text style={[styles.confirmButtonText, { fontSize }]}>تأیید</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -120,50 +156,38 @@ export const TimePicker: React.FC<TimePickerProps> = ({ times, onTimesChange }) 
 };
 
 const styles = StyleSheet.create({
-  container: { marginBottom: 16 },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  label: { fontSize: 16, fontFamily: 'Vazirmatn_Bold', color: '#2D2D3A' },
-  addButton: { backgroundColor: '#6C63FF', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 12 },
-  addButtonText: { color: '#FFFFFF', fontSize: 14, fontFamily: 'Vazirmatn' },
+  container: { marginBottom: 8 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  label: { fontFamily: 'Vazirmatn_Bold' },
+  addButton: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 14 },
+  addButtonText: { color: '#FFFFFF', fontFamily: 'Vazirmatn_Bold' },
   timesList: { gap: 8 },
-  emptyText: { textAlign: 'center', color: '#9E9EA7', fontFamily: 'Vazirmatn', fontSize: 14, paddingVertical: 16 },
+  emptyText: { textAlign: 'center', fontFamily: 'Vazirmatn', paddingVertical: 16 },
   timeItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#F0EFFF',
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 14,
+    padding: 14,
   },
-  timeText: { fontSize: 16, fontFamily: 'Vazirmatn_Bold', color: '#6C63FF' },
-  removeButton: { backgroundColor: '#FF6B6B', width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  removeButtonText: { color: '#FFFFFF', fontSize: 12 },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24 },
-  modalTitle: { fontSize: 20, fontFamily: 'Vazirmatn_Bold', color: '#2D2D3A', textAlign: 'center', marginBottom: 24 },
-  pickerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginBottom: 24,
-  },
+  timeText: { fontFamily: 'Vazirmatn_Bold' },
+  removeButton: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  removeButtonText: { color: '#FFFFFF', fontSize: 20, lineHeight: 24 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
+  modalContent: { borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, paddingBottom: 40 },
+  modalTitle: { fontFamily: 'Vazirmatn_Bold', textAlign: 'center', marginBottom: 24 },
+  pickerContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 16 },
   pickerColumn: { alignItems: 'center', flex: 1 },
-  pickerLabel: { fontSize: 13, fontFamily: 'Vazirmatn', color: '#9E9EA7', marginBottom: 8 },
-  pickerScroll: { height: 180 },
-  pickerItem: { paddingVertical: 12, paddingHorizontal: 20, borderRadius: 12, marginVertical: 2, alignItems: 'center' },
-  pickerItemSelected: { backgroundColor: '#6C63FF' },
-  pickerItemText: { fontSize: 20, fontFamily: 'Vazirmatn_Bold', color: '#2D2D3A' },
-  pickerItemTextSelected: { color: '#FFFFFF' },
-  pickerSeparator: { fontSize: 28, fontFamily: 'Vazirmatn_Bold', color: '#2D2D3A' },
+  pickerLabel: { fontFamily: 'Vazirmatn', marginBottom: 8 },
+  pickerScroll: { height: 200 },
+  pickerItem: { paddingVertical: 12, paddingHorizontal: 20, borderRadius: 12, marginVertical: 2, alignItems: 'center', minWidth: 70 },
+  pickerItemText: { fontFamily: 'Vazirmatn_Bold' },
+  pickerSeparator: { fontFamily: 'Vazirmatn_Bold', marginBottom: 24 },
+  selectedTime: { borderRadius: 16, padding: 16, alignItems: 'center', marginBottom: 20 },
+  selectedTimeText: { fontFamily: 'Vazirmatn_Bold' },
   modalActions: { flexDirection: 'row', gap: 12 },
-  cancelButton: { flex: 1, backgroundColor: '#F0EFFF', paddingVertical: 16, borderRadius: 16, alignItems: 'center' },
-  cancelButtonText: { color: '#6C63FF', fontSize: 16, fontFamily: 'Vazirmatn_Bold' },
-  confirmButton: { flex: 1, backgroundColor: '#6C63FF', paddingVertical: 16, borderRadius: 16, alignItems: 'center' },
-  confirmButtonText: { color: '#FFFFFF', fontSize: 16, fontFamily: 'Vazirmatn_Bold' },
+  cancelButton: { flex: 1, paddingVertical: 16, borderRadius: 16, alignItems: 'center' },
+  cancelButtonText: { fontFamily: 'Vazirmatn_Bold' },
+  confirmButton: { flex: 1, paddingVertical: 16, borderRadius: 16, alignItems: 'center' },
+  confirmButtonText: { color: '#FFFFFF', fontFamily: 'Vazirmatn_Bold' },
 });
