@@ -16,15 +16,22 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMedicationStore } from '../../src/store/medicationStore';
 import { TimePicker } from '../../src/components/TimePicker';
 import { AudioRecorder } from '../../src/components/AudioRecorder';
+import { FrequencyPicker, FrequencyType } from '../../src/components/FrequencyPicker';
 import { toEnglishDigits } from '../../src/utils/persian';
+import { useTheme } from '../../src/theme/ThemeContext';
 
 export default function AddMedicationScreen() {
   const { addMedication } = useMedicationStore();
+  const { theme, fontSize } = useTheme();
+
   const [name, setName] = useState('');
   const [dose, setDose] = useState('');
   const [totalPills, setTotalPills] = useState('');
   const [pillsPerDose, setPillsPerDose] = useState('1');
   const [times, setTimes] = useState<string[]>([]);
+  const [notes, setNotes] = useState('');
+  const [frequencyType, setFrequencyType] = useState<FrequencyType>('daily');
+  const [frequencyDays, setFrequencyDays] = useState<number[]>([]);
   const [audioUri, setAudioUri] = useState<string | undefined>(undefined);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -49,6 +56,18 @@ export default function AddMedicationScreen() {
       Alert.alert('خطا', 'لطفاً حداقل یه زمان مصرف اضافه کنید');
       return false;
     }
+    if (frequencyType === 'weekly' && frequencyDays.length === 0) {
+      Alert.alert('خطا', 'لطفاً حداقل یه روز از هفته انتخاب کنید');
+      return false;
+    }
+    if (frequencyType === 'monthly' && frequencyDays.length === 0) {
+      Alert.alert('خطا', 'لطفاً حداقل یه روز از ماه انتخاب کنید');
+      return false;
+    }
+    if (frequencyType === 'custom' && frequencyDays.length === 0) {
+      Alert.alert('خطا', 'لطفاً فاصله مصرف رو انتخاب کنید');
+      return false;
+    }
     return true;
   };
 
@@ -64,6 +83,9 @@ export default function AddMedicationScreen() {
         pills_per_dose: Number(toEnglishDigits(pillsPerDose)),
         start_date: new Date().toISOString().split('T')[0],
         times,
+        frequency_type: frequencyType,
+        frequency_days: frequencyDays,
+        notes: notes.trim() || undefined,
         audio_uri: audioUri,
       });
       if (id > 0) {
@@ -83,97 +105,119 @@ export default function AddMedicationScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top', 'bottom']}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <Animated.View entering={FadeInDown.duration(400)} style={styles.header}>
-          <TouchableOpacity style={styles.cancelButton} onPress={() => router.back()}>
-            <Text style={styles.cancelButtonText}>لغو</Text>
+        <Animated.View entering={FadeInDown.duration(400)} style={[styles.header, { backgroundColor: theme.card, shadowColor: theme.shadow }]}>
+          <TouchableOpacity style={[styles.cancelButton, { backgroundColor: theme.primaryLight }]} onPress={() => router.back()}>
+            <Text style={[styles.cancelButtonText, { color: theme.primary, fontSize }]}>لغو</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>دارو جدید</Text>
+          <Text style={[styles.headerTitle, { color: theme.text, fontSize: fontSize + 4 }]}>دارو جدید</Text>
           <View style={styles.headerPlaceholder} />
         </Animated.View>
 
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-        >
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+
           <Animated.View entering={FadeInDown.delay(100).duration(400)}>
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>اطلاعات دارو</Text>
+            <View style={[styles.card, { backgroundColor: theme.card, shadowColor: theme.shadow }]}>
+              <Text style={[styles.cardTitle, { color: theme.text, fontSize: fontSize + 2 }]}>اطلاعات دارو</Text>
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>نام دارو *</Text>
+                <Text style={[styles.inputLabel, { color: theme.text, fontSize }]}>نام دارو *</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: theme.background, borderColor: theme.primaryLight, color: theme.text, fontSize }]}
                   value={name}
                   onChangeText={setName}
                   placeholder="مثلاً: متفورمین"
-                  placeholderTextColor="#C0C0CF"
+                  placeholderTextColor={theme.textLight}
                   textAlign="right"
                 />
               </View>
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>دوز *</Text>
+                <Text style={[styles.inputLabel, { color: theme.text, fontSize }]}>دوز *</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: theme.background, borderColor: theme.primaryLight, color: theme.text, fontSize }]}
                   value={dose}
                   onChangeText={setDose}
                   placeholder="مثلاً: 500mg"
-                  placeholderTextColor="#C0C0CF"
+                  placeholderTextColor={theme.textLight}
                   textAlign="right"
                 />
               </View>
               <View style={styles.row}>
                 <View style={[styles.inputGroup, { flex: 1 }]}>
-                  <Text style={styles.inputLabel}>کل قرص‌ها *</Text>
+                  <Text style={[styles.inputLabel, { color: theme.text, fontSize }]}>کل قرص‌ها *</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { backgroundColor: theme.background, borderColor: theme.primaryLight, color: theme.text, fontSize }]}
                     value={totalPills}
                     onChangeText={setTotalPills}
                     placeholder="30"
-                    placeholderTextColor="#C0C0CF"
+                    placeholderTextColor={theme.textLight}
                     keyboardType="number-pad"
                     textAlign="right"
                   />
                 </View>
                 <View style={styles.rowSpacer} />
                 <View style={[styles.inputGroup, { flex: 1 }]}>
-                  <Text style={styles.inputLabel}>هر بار چند تا *</Text>
+                  <Text style={[styles.inputLabel, { color: theme.text, fontSize }]}>هر بار چند تا *</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { backgroundColor: theme.background, borderColor: theme.primaryLight, color: theme.text, fontSize }]}
                     value={pillsPerDose}
                     onChangeText={setPillsPerDose}
                     placeholder="1"
-                    placeholderTextColor="#C0C0CF"
+                    placeholderTextColor={theme.textLight}
                     keyboardType="number-pad"
                     textAlign="right"
                   />
                 </View>
               </View>
+              <View style={styles.inputGroup}>
+                <Text style={[styles.inputLabel, { color: theme.text, fontSize }]}>توضیحات (اختیاری)</Text>
+                <TextInput
+                  style={[styles.input, styles.notesInput, { backgroundColor: theme.background, borderColor: theme.primaryLight, color: theme.text, fontSize }]}
+                  value={notes}
+                  onChangeText={setNotes}
+                  placeholder="مثلاً: همراه غذا مصرف شود"
+                  placeholderTextColor={theme.textLight}
+                  textAlign="right"
+                  multiline
+                  numberOfLines={3}
+                />
+              </View>
             </View>
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(200).duration(400)}>
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>زمان‌بندی</Text>
-              <TimePicker times={times} onTimesChange={setTimes} />
+            <View style={[styles.card, { backgroundColor: theme.card, shadowColor: theme.shadow }]}>
+              <Text style={[styles.cardTitle, { color: theme.text, fontSize: fontSize + 2 }]}>دوره مصرف</Text>
+              <FrequencyPicker
+                frequencyType={frequencyType}
+                frequencyDays={frequencyDays}
+                onFrequencyTypeChange={setFrequencyType}
+                onFrequencyDaysChange={setFrequencyDays}
+              />
             </View>
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(300).duration(400)}>
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>صدای یادآوری</Text>
-              <AudioRecorder audioUri={audioUri} onAudioChange={setAudioUri} />
+            <View style={[styles.card, { backgroundColor: theme.card, shadowColor: theme.shadow }]}>
+              <Text style={[styles.cardTitle, { color: theme.text, fontSize: fontSize + 2 }]}>زمان‌بندی</Text>
+              <TimePicker times={times} onTimesChange={setTimes} />
             </View>
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(400).duration(400)}>
+            <View style={[styles.card, { backgroundColor: theme.card, shadowColor: theme.shadow }]}>
+              <Text style={[styles.cardTitle, { color: theme.text, fontSize: fontSize + 2 }]}>صدای یادآوری</Text>
+              <AudioRecorder audioUri={audioUri} onAudioChange={setAudioUri} />
+            </View>
+          </Animated.View>
+
+          <Animated.View entering={FadeInDown.delay(500).duration(400)}>
             <TouchableOpacity
-              style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
+              style={[styles.saveButton, { backgroundColor: theme.primary }, isSaving && styles.saveButtonDisabled]}
               onPress={handleSave}
               disabled={isSaving}
             >
-              <Text style={styles.saveButtonText}>
+              <Text style={[styles.saveButtonText, { fontSize: fontSize + 2 }]}>
                 {isSaving ? 'در حال ذخیره...' : 'ذخیره دارو'}
               </Text>
             </TouchableOpacity>
@@ -187,64 +231,55 @@ export default function AddMedicationScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8F8FF' },
+  container: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#6C63FF',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 3,
   },
-  headerTitle: { fontSize: 20, fontFamily: 'Vazirmatn_Bold', color: '#2D2D3A' },
+  headerTitle: { fontFamily: 'Vazirmatn_Bold' },
   headerPlaceholder: { width: 48 },
-  cancelButton: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 12, backgroundColor: '#F0EFFF' },
-  cancelButtonText: { fontSize: 15, fontFamily: 'Vazirmatn', color: '#6C63FF' },
+  cancelButton: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 12 },
+  cancelButtonText: { fontFamily: 'Vazirmatn' },
   scrollContent: { padding: 16, gap: 16 },
   card: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 16,
-    shadowColor: '#6C63FF',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 3,
     gap: 12,
   },
-  cardTitle: { fontSize: 18, fontFamily: 'Vazirmatn_Bold', color: '#2D2D3A', textAlign: 'right', marginBottom: 4 },
+  cardTitle: { fontFamily: 'Vazirmatn_Bold', textAlign: 'right', marginBottom: 4 },
   inputGroup: { gap: 6 },
-  inputLabel: { fontSize: 14, fontFamily: 'Vazirmatn_Bold', color: '#2D2D3A', textAlign: 'right' },
+  inputLabel: { fontFamily: 'Vazirmatn_Bold', textAlign: 'right' },
   input: {
-    backgroundColor: '#F8F8FF',
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    fontSize: 16,
     fontFamily: 'Vazirmatn',
-    color: '#2D2D3A',
     borderWidth: 1.5,
-    borderColor: '#E8E8F0',
   },
+  notesInput: { height: 90, textAlignVertical: 'top', paddingTop: 12 },
   row: { flexDirection: 'row', alignItems: 'flex-start' },
   rowSpacer: { width: 12 },
   saveButton: {
-    backgroundColor: '#6C63FF',
     borderRadius: 20,
     paddingVertical: 18,
     alignItems: 'center',
-    shadowColor: '#6C63FF',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 16,
     elevation: 8,
   },
   saveButtonDisabled: { opacity: 0.6 },
-  saveButtonText: { fontSize: 18, fontFamily: 'Vazirmatn_Bold', color: '#FFFFFF' },
+  saveButtonText: { fontFamily: 'Vazirmatn_Bold', color: '#FFFFFF' },
   bottomSpacing: { height: 40 },
 });
