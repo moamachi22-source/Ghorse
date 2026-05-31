@@ -13,6 +13,9 @@ export const initDatabase = (): void => {
         pills_per_dose INTEGER NOT NULL,
         start_date TEXT NOT NULL,
         times TEXT NOT NULL,
+        frequency_type TEXT NOT NULL DEFAULT 'daily',
+        frequency_days TEXT,
+        notes TEXT,
         audio_uri TEXT,
         created_at TEXT NOT NULL DEFAULT (datetime('now'))
       );
@@ -27,5 +30,20 @@ export const initDatabase = (): void => {
         FOREIGN KEY (medication_id) REFERENCES medications (id) ON DELETE CASCADE
       );
     `);
+    tx.executeSql(`
+      CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      );
+    `);
+    tx.executeSql(`
+      ALTER TABLE medications ADD COLUMN notes TEXT;
+    `, [], () => {}, () => false);
+    tx.executeSql(`
+      ALTER TABLE medications ADD COLUMN frequency_type TEXT DEFAULT 'daily';
+    `, [], () => {}, () => false);
+    tx.executeSql(`
+      ALTER TABLE medications ADD COLUMN frequency_days TEXT;
+    `, [], () => {}, () => false);
   });
 };
