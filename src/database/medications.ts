@@ -8,6 +8,9 @@ export interface Medication {
   pills_per_dose: number;
   start_date: string;
   times: string[];
+  frequency_type: 'daily' | 'alternate' | 'weekly' | 'monthly' | 'custom';
+  frequency_days: number[];
+  notes?: string;
   audio_uri?: string;
   created_at: string;
 }
@@ -19,6 +22,9 @@ export interface MedicationInput {
   pills_per_dose: number;
   start_date: string;
   times: string[];
+  frequency_type: 'daily' | 'alternate' | 'weekly' | 'monthly' | 'custom';
+  frequency_days: number[];
+  notes?: string;
   audio_uri?: string;
 }
 
@@ -32,7 +38,12 @@ export const getAllMedications = (): Promise<Medication[]> => {
           const medications: Medication[] = [];
           for (let i = 0; i < result.rows.length; i++) {
             const row = result.rows.item(i);
-            medications.push({ ...row, times: JSON.parse(row.times) });
+            medications.push({
+              ...row,
+              times: JSON.parse(row.times),
+              frequency_days: row.frequency_days ? JSON.parse(row.frequency_days) : [],
+              frequency_type: row.frequency_type || 'daily',
+            });
           }
           resolve(medications);
         },
@@ -51,7 +62,12 @@ export const getMedicationById = (id: number): Promise<Medication | null> => {
         (_, result) => {
           if (result.rows.length > 0) {
             const row = result.rows.item(0);
-            resolve({ ...row, times: JSON.parse(row.times) });
+            resolve({
+              ...row,
+              times: JSON.parse(row.times),
+              frequency_days: row.frequency_days ? JSON.parse(row.frequency_days) : [],
+              frequency_type: row.frequency_type || 'daily',
+            });
           } else {
             resolve(null);
           }
@@ -66,8 +82,8 @@ export const addMedication = (input: MedicationInput): Promise<number> => {
   return new Promise((resolve, reject) => {
     db.transaction((tx) => {
       tx.executeSql(
-        `INSERT INTO medications (name, dose, total_pills, pills_per_dose, start_date, times, audio_uri)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO medications (name, dose, total_pills, pills_per_dose, start_date, times, frequency_type, frequency_days, notes, audio_uri)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           input.name,
           input.dose,
@@ -75,6 +91,9 @@ export const addMedication = (input: MedicationInput): Promise<number> => {
           input.pills_per_dose,
           input.start_date,
           JSON.stringify(input.times),
+          input.frequency_type,
+          JSON.stringify(input.frequency_days),
+          input.notes ?? null,
           input.audio_uri ?? null,
         ],
         (_, result) => { resolve(result.insertId ?? -1); },
@@ -89,7 +108,7 @@ export const updateMedication = (id: number, input: MedicationInput): Promise<vo
     db.transaction((tx) => {
       tx.executeSql(
         `UPDATE medications
-         SET name = ?, dose = ?, total_pills = ?, pills_per_dose = ?, start_date = ?, times = ?, audio_uri = ?
+         SET name = ?, dose = ?, total_pills = ?, pills_per_dose = ?, start_date = ?, times = ?, frequency_type = ?, frequency_days = ?, notes = ?, audio_uri = ?
          WHERE id = ?`,
         [
           input.name,
@@ -98,6 +117,9 @@ export const updateMedication = (id: number, input: MedicationInput): Promise<vo
           input.pills_per_dose,
           input.start_date,
           JSON.stringify(input.times),
+          input.frequency_type,
+          JSON.stringify(input.frequency_days),
+          input.notes ?? null,
           input.audio_uri ?? null,
           id,
         ],
