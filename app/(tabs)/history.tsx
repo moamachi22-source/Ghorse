@@ -7,6 +7,7 @@ import { getAllMedications, Medication } from '../../src/database/medications';
 import { getDosesByMedication, Dose, getAdherenceStats } from '../../src/database/doses';
 import { DoseTracker } from '../../src/components/DoseTracker';
 import { toPersianDigits, formatTime, getShortDate } from '../../src/utils/persian';
+import { useTheme } from '../../src/theme/ThemeContext';
 
 interface MedicationWithStats {
   medication: Medication;
@@ -17,6 +18,7 @@ interface MedicationWithStats {
 export default function HistoryScreen() {
   const [data, setData] = useState<MedicationWithStats[]>([]);
   const [selectedMedId, setSelectedMedId] = useState<number | null>(null);
+  const { theme, fontSize } = useTheme();
 
   useFocusEffect(useCallback(() => { loadData(); }, []));
 
@@ -41,9 +43,9 @@ export default function HistoryScreen() {
   const selectedData = data.find((d) => d.medication.id === selectedMedId);
 
   const getStatusColor = (status: string): string => {
-    if (status === 'taken') return '#4CAF50';
-    if (status === 'missed') return '#FF6B6B';
-    return '#9E9EA7';
+    if (status === 'taken') return theme.success;
+    if (status === 'missed') return theme.danger;
+    return theme.textLight;
   };
 
   const getStatusText = (status: string): string => {
@@ -53,22 +55,26 @@ export default function HistoryScreen() {
   };
 
   const renderDoseItem = ({ item, index }: { item: Dose; index: number }) => (
-    <Animated.View entering={FadeInDown.delay(index * 50).duration(300)} style={styles.doseItem}>
+    <Animated.View entering={FadeInDown.delay(index * 50).duration(300)}
+      style={[styles.doseItem, { backgroundColor: theme.card, shadowColor: theme.shadow }]}
+    >
       <View style={styles.doseLeft}>
         <View style={[styles.statusDot, { backgroundColor: getStatusColor(item.status) }]} />
         <View>
-          <Text style={styles.doseTime}>{getShortDate(item.scheduled_time)}</Text>
-          <Text style={styles.doseScheduled}>
+          <Text style={[styles.doseTime, { color: theme.text, fontSize }]}>
+            {getShortDate(item.scheduled_time)}
+          </Text>
+          <Text style={[styles.doseScheduled, { color: theme.textLight, fontSize: fontSize - 2 }]}>
             ساعت {formatTime(new Date(item.scheduled_time).toTimeString().slice(0, 5))}
           </Text>
         </View>
       </View>
       <View style={styles.doseRight}>
-        <Text style={[styles.doseStatus, { color: getStatusColor(item.status) }]}>
+        <Text style={[styles.doseStatus, { color: getStatusColor(item.status), fontSize }]}>
           {getStatusText(item.status)}
         </Text>
         {item.taken_at && (
-          <Text style={styles.doseTakenAt}>
+          <Text style={[styles.doseTakenAt, { color: theme.textLight, fontSize: fontSize - 2 }]}>
             در {formatTime(new Date(item.taken_at).toTimeString().slice(0, 5))}
           </Text>
         )}
@@ -78,26 +84,34 @@ export default function HistoryScreen() {
 
   if (data.length === 0) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>تاریخچه مصرف</Text>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
+        <View style={[styles.header, { backgroundColor: theme.card, shadowColor: theme.shadow }]}>
+          <Text style={[styles.headerTitle, { color: theme.text, fontSize: fontSize + 8 }]}>تاریخچه مصرف</Text>
         </View>
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyEmoji}>📋</Text>
-          <Text style={styles.emptyTitle}>هنوز داروی ثبت نشده</Text>
-          <Text style={styles.emptySubtitle}>بعد از ثبت مصرف، تاریخچه اینجا نشون داده میشه</Text>
+          <Text style={[styles.emptyTitle, { color: theme.text, fontSize: fontSize + 4 }]}>
+            هنوز داروی ثبت نشده
+          </Text>
+          <Text style={[styles.emptySubtitle, { color: theme.textLight, fontSize }]}>
+            بعد از ثبت مصرف، تاریخچه اینجا نشون داده میشه
+          </Text>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <Animated.View entering={FadeInDown.duration(400)} style={styles.header}>
-        <Text style={styles.headerTitle}>تاریخچه مصرف</Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
+      <Animated.View entering={FadeInDown.duration(400)}
+        style={[styles.header, { backgroundColor: theme.card, shadowColor: theme.shadow }]}
+      >
+        <Text style={[styles.headerTitle, { color: theme.text, fontSize: fontSize + 8 }]}>تاریخچه مصرف</Text>
       </Animated.View>
 
-      <Animated.View entering={FadeInDown.delay(100).duration(400)} style={styles.medicationTabs}>
+      <Animated.View entering={FadeInDown.delay(100).duration(400)}
+        style={[styles.medicationTabs, { backgroundColor: theme.card }]}
+      >
         <FlatList
           data={data}
           horizontal
@@ -106,10 +120,18 @@ export default function HistoryScreen() {
           contentContainerStyle={styles.tabsContent}
           renderItem={({ item }) => (
             <TouchableOpacity
-              style={[styles.medicationTab, selectedMedId === item.medication.id && styles.medicationTabActive]}
+              style={[
+                styles.medicationTab,
+                { backgroundColor: theme.primaryLight },
+                selectedMedId === item.medication.id && { backgroundColor: theme.primary },
+              ]}
               onPress={() => setSelectedMedId(item.medication.id)}
             >
-              <Text style={[styles.medicationTabText, selectedMedId === item.medication.id && styles.medicationTabTextActive]}>
+              <Text style={[
+                styles.medicationTabText,
+                { color: theme.primary, fontSize },
+                selectedMedId === item.medication.id && { color: '#FFFFFF' },
+              ]}>
                 {item.medication.name}
               </Text>
             </TouchableOpacity>
@@ -128,7 +150,9 @@ export default function HistoryScreen() {
             />
           </Animated.View>
           <Animated.View entering={FadeInDown.delay(300).duration(400)} style={styles.dosesHeader}>
-            <Text style={styles.dosesTitle}>آخرین {toPersianDigits(selectedData.doses.length)} دوز</Text>
+            <Text style={[styles.dosesTitle, { color: theme.text, fontSize: fontSize + 2 }]}>
+              آخرین {toPersianDigits(selectedData.doses.length)} دوز
+            </Text>
           </Animated.View>
           <FlatList
             data={selectedData.doses}
@@ -138,7 +162,9 @@ export default function HistoryScreen() {
             showsVerticalScrollIndicator={false}
             ListEmptyComponent={
               <View style={styles.noDosesContainer}>
-                <Text style={styles.noDosesText}>هنوز دوزی ثبت نشده</Text>
+                <Text style={[styles.noDosesText, { color: theme.textLight, fontSize }]}>
+                  هنوز دوزی ثبت نشده
+                </Text>
               </View>
             }
           />
@@ -149,36 +175,30 @@ export default function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8F8FF' },
+  container: { flex: 1 },
   header: {
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#6C63FF',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 3,
     alignItems: 'flex-end',
   },
-  headerTitle: { fontSize: 24, fontFamily: 'Vazirmatn_Bold', color: '#2D2D3A' },
-  medicationTabs: { backgroundColor: '#FFFFFF', paddingBottom: 12 },
+  headerTitle: { fontFamily: 'Vazirmatn_Bold' },
+  medicationTabs: { paddingBottom: 12 },
   tabsContent: { paddingHorizontal: 16, gap: 8, paddingTop: 12 },
-  medicationTab: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#F0EFFF', marginLeft: 4 },
-  medicationTabActive: { backgroundColor: '#6C63FF' },
-  medicationTabText: { fontSize: 14, fontFamily: 'Vazirmatn', color: '#6C63FF' },
-  medicationTabTextActive: { color: '#FFFFFF', fontFamily: 'Vazirmatn_Bold' },
+  medicationTab: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, marginLeft: 4 },
+  medicationTabText: { fontFamily: 'Vazirmatn_Bold' },
   dosesHeader: { paddingHorizontal: 20, paddingVertical: 12, alignItems: 'flex-end' },
-  dosesTitle: { fontSize: 16, fontFamily: 'Vazirmatn_Bold', color: '#2D2D3A' },
+  dosesTitle: { fontFamily: 'Vazirmatn_Bold' },
   dosesList: { paddingHorizontal: 16, paddingBottom: 100, gap: 8 },
   doseItem: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 14,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    shadowColor: '#6C63FF',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 8,
@@ -186,15 +206,15 @@ const styles = StyleSheet.create({
   },
   doseLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   statusDot: { width: 12, height: 12, borderRadius: 6 },
-  doseTime: { fontSize: 15, fontFamily: 'Vazirmatn_Bold', color: '#2D2D3A' },
-  doseScheduled: { fontSize: 12, fontFamily: 'Vazirmatn', color: '#9E9EA7', marginTop: 2 },
+  doseTime: { fontFamily: 'Vazirmatn_Bold' },
+  doseScheduled: { fontFamily: 'Vazirmatn', marginTop: 2 },
   doseRight: { alignItems: 'flex-end' },
-  doseStatus: { fontSize: 13, fontFamily: 'Vazirmatn_Bold' },
-  doseTakenAt: { fontSize: 11, fontFamily: 'Vazirmatn', color: '#9E9EA7', marginTop: 2 },
+  doseStatus: { fontFamily: 'Vazirmatn_Bold' },
+  doseTakenAt: { fontFamily: 'Vazirmatn', marginTop: 2 },
   emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40 },
   emptyEmoji: { fontSize: 64, marginBottom: 16 },
-  emptyTitle: { fontSize: 20, fontFamily: 'Vazirmatn_Bold', color: '#2D2D3A', textAlign: 'center', marginBottom: 8 },
-  emptySubtitle: { fontSize: 15, fontFamily: 'Vazirmatn', color: '#9E9EA7', textAlign: 'center', lineHeight: 24 },
+  emptyTitle: { fontFamily: 'Vazirmatn_Bold', textAlign: 'center', marginBottom: 8 },
+  emptySubtitle: { fontFamily: 'Vazirmatn', textAlign: 'center', lineHeight: 24 },
   noDosesContainer: { alignItems: 'center', paddingVertical: 32 },
-  noDosesText: { fontSize: 15, fontFamily: 'Vazirmatn', color: '#9E9EA7' },
+  noDosesText: { fontFamily: 'Vazirmatn' },
 });
