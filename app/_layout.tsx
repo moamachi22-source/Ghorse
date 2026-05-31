@@ -3,6 +3,7 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { ThemeProvider } from '../src/theme/ThemeContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -35,13 +36,15 @@ export default function RootLayout() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="medication/add" options={{ headerShown: false, presentation: 'modal' }} />
-        <Stack.Screen name="medication/[id]" options={{ headerShown: false, presentation: 'modal' }} />
-      </Stack>
-    </GestureHandlerRootView>
+    <ThemeProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="medication/add" options={{ headerShown: false, presentation: 'modal' }} />
+          <Stack.Screen name="medication/[id]" options={{ headerShown: false, presentation: 'modal' }} />
+        </Stack>
+      </GestureHandlerRootView>
+    </ThemeProvider>
   );
 }
 
