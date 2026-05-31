@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming, withDelay } from 'react-native-reanimated';
 import { toPersianDigits } from '../utils/persian';
+import { useTheme } from '../theme/ThemeContext';
 
 interface DoseTrackerProps {
   total: number;
@@ -11,6 +12,7 @@ interface DoseTrackerProps {
 }
 
 export const DoseTracker: React.FC<DoseTrackerProps> = ({ total, taken, missed, percentage }) => {
+  const { theme, fontSize } = useTheme();
   const progressWidth = useSharedValue(0);
 
   React.useEffect(() => {
@@ -22,29 +24,37 @@ export const DoseTracker: React.FC<DoseTrackerProps> = ({ total, taken, missed, 
   }));
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>آمار مصرف</Text>
+    <View style={[styles.container, { backgroundColor: theme.card, shadowColor: theme.shadow }]}>
+      <Text style={[styles.title, { color: theme.text, fontSize: fontSize + 2 }]}>آمار مصرف</Text>
       <View style={styles.progressContainer}>
-        <View style={styles.progressBar}>
-          <Animated.View style={[styles.progressFill, progressStyle]} />
+        <View style={[styles.progressBar, { backgroundColor: theme.primaryLight }]}>
+          <Animated.View style={[styles.progressFill, { backgroundColor: theme.primary }, progressStyle]} />
         </View>
-        <Text style={styles.percentage}>{toPersianDigits(percentage)}٪</Text>
+        <Text style={[styles.percentage, { color: theme.primary, fontSize: fontSize + 2 }]}>
+          {toPersianDigits(percentage)}٪
+        </Text>
       </View>
       <View style={styles.stats}>
         <View style={styles.statItem}>
-          <View style={[styles.statDot, { backgroundColor: '#6C63FF' }]} />
-          <Text style={styles.statLabel}>خورده شده</Text>
-          <Text style={styles.statValue}>{toPersianDigits(taken)}</Text>
+          <View style={[styles.statDot, { backgroundColor: theme.primary }]} />
+          <Text style={[styles.statLabel, { color: theme.textLight, fontSize: fontSize - 2 }]}>خورده شده</Text>
+          <Text style={[styles.statValue, { color: theme.text, fontSize: fontSize + 4 }]}>
+            {toPersianDigits(taken)}
+          </Text>
         </View>
         <View style={styles.statItem}>
-          <View style={[styles.statDot, { backgroundColor: '#FF6B6B' }]} />
-          <Text style={styles.statLabel}>فراموش شده</Text>
-          <Text style={styles.statValue}>{toPersianDigits(missed)}</Text>
+          <View style={[styles.statDot, { backgroundColor: theme.danger }]} />
+          <Text style={[styles.statLabel, { color: theme.textLight, fontSize: fontSize - 2 }]}>فراموش شده</Text>
+          <Text style={[styles.statValue, { color: theme.text, fontSize: fontSize + 4 }]}>
+            {toPersianDigits(missed)}
+          </Text>
         </View>
         <View style={styles.statItem}>
-          <View style={[styles.statDot, { backgroundColor: '#E0E0F0' }]} />
-          <Text style={styles.statLabel}>کل دوزها</Text>
-          <Text style={styles.statValue}>{toPersianDigits(total)}</Text>
+          <View style={[styles.statDot, { backgroundColor: theme.primaryLight }]} />
+          <Text style={[styles.statLabel, { color: theme.textLight, fontSize: fontSize - 2 }]}>کل دوزها</Text>
+          <Text style={[styles.statValue, { color: theme.text, fontSize: fontSize + 4 }]}>
+            {toPersianDigits(total)}
+          </Text>
         </View>
       </View>
     </View>
@@ -53,70 +63,23 @@ export const DoseTracker: React.FC<DoseTrackerProps> = ({ total, taken, missed, 
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 16,
     marginHorizontal: 16,
     marginVertical: 8,
-    shadowColor: '#6C63FF',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 5,
   },
-  title: {
-    fontSize: 16,
-    fontFamily: 'Vazirmatn_Bold',
-    color: '#2D2D3A',
-    textAlign: 'right',
-    marginBottom: 12,
-  },
-  progressContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 16,
-  },
-  progressBar: {
-    flex: 1,
-    height: 12,
-    backgroundColor: '#F0EFFF',
-    borderRadius: 6,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#6C63FF',
-    borderRadius: 6,
-  },
-  percentage: {
-    fontSize: 16,
-    fontFamily: 'Vazirmatn_Bold',
-    color: '#6C63FF',
-    minWidth: 45,
-    textAlign: 'right',
-  },
-  stats: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  statItem: {
-    alignItems: 'center',
-    gap: 4,
-  },
-  statDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  statLabel: {
-    fontSize: 12,
-    fontFamily: 'Vazirmatn',
-    color: '#9E9EA7',
-  },
-  statValue: {
-    fontSize: 18,
-    fontFamily: 'Vazirmatn_Bold',
-    color: '#2D2D3A',
-  },
+  title: { fontFamily: 'Vazirmatn_Bold', textAlign: 'right', marginBottom: 12 },
+  progressContainer: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 },
+  progressBar: { flex: 1, height: 14, borderRadius: 7, overflow: 'hidden' },
+  progressFill: { height: '100%', borderRadius: 7 },
+  percentage: { fontFamily: 'Vazirmatn_Bold', minWidth: 50, textAlign: 'right' },
+  stats: { flexDirection: 'row', justifyContent: 'space-around' },
+  statItem: { alignItems: 'center', gap: 4 },
+  statDot: { width: 12, height: 12, borderRadius: 6 },
+  statLabel: { fontFamily: 'Vazirmatn' },
+  statValue: { fontFamily: 'Vazirmatn_Bold' },
 });
