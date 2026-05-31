@@ -1,18 +1,16 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Alert,
   Platform,
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../src/theme/ThemeContext';
 import { themes } from '../../src/theme/index';
-import { toPersianDigits } from '../../src/utils/persian';
 
 const FONT_SIZES = [
   { label: 'خیلی کوچک', value: 13 },
@@ -38,30 +36,28 @@ export default function SettingsScreen() {
             اندازه متن
           </Text>
           <View style={[styles.card, { backgroundColor: theme.card, shadowColor: theme.shadow }]}>
-            <Text style={[styles.previewText, { color: theme.primary, fontSize, backgroundColor: theme.primaryLight }]}>
-              وقت مصرف قرص متفورمین رسیده
-            </Text>
-            <View style={styles.fontSizeButtons}>
-              {FONT_SIZES.map((item) => (
-                <TouchableOpacity
-                  key={item.value}
-                  style={[
-                    styles.fontSizeButton,
-                    { backgroundColor: theme.primaryLight, borderColor: theme.primary },
-                    fontSize === item.value && { backgroundColor: theme.primary },
-                  ]}
-                  onPress={() => setFontSize(item.value)}
-                >
-                  <Text style={[
-                    styles.fontSizeButtonText,
-                    { color: theme.primary },
-                    fontSize === item.value && { color: '#FFFFFF' },
-                  ]}>
-                    {item.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+            {FONT_SIZES.map((item) => (
+              <TouchableOpacity
+                key={item.value}
+                style={[
+                  styles.listItem,
+                  { borderBottomColor: theme.primaryLight },
+                  fontSize === item.value && { backgroundColor: theme.primaryLight },
+                ]}
+                onPress={() => setFontSize(item.value)}
+              >
+                <View style={[
+                  styles.checkCircle,
+                  { borderColor: theme.primary },
+                  fontSize === item.value && { backgroundColor: theme.primary },
+                ]}>
+                  {fontSize === item.value && <Text style={styles.checkMark}>✓</Text>}
+                </View>
+                <Text style={[styles.listItemText, { color: theme.text, fontSize: item.value }]}>
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </Animated.View>
 
@@ -70,26 +66,36 @@ export default function SettingsScreen() {
             تم رنگی
           </Text>
           <View style={[styles.card, { backgroundColor: theme.card, shadowColor: theme.shadow }]}>
-            <View style={styles.themesGrid}>
-              {themes.map((t) => (
-                <TouchableOpacity
-                  key={t.id}
-                  style={[
-                    styles.themeButton,
-                    { backgroundColor: t.primary },
-                    theme.id === t.id && styles.themeButtonActive,
-                  ]}
-                  onPress={() => setTheme(t.id)}
-                >
-                  <Text style={[styles.themeButtonText, { fontSize: fontSize - 4 }]}>
+            {themes.map((t, index) => (
+              <TouchableOpacity
+                key={t.id}
+                style={[
+                  styles.themeListItem,
+                  { borderBottomColor: theme.primaryLight },
+                  index === themes.length - 1 && { borderBottomWidth: 0 },
+                  theme.id === t.id && { backgroundColor: t.primaryLight },
+                ]}
+                onPress={() => setTheme(t.id)}
+              >
+                <View style={[
+                  styles.checkCircle,
+                  { borderColor: t.primary },
+                  theme.id === t.id && { backgroundColor: t.primary },
+                ]}>
+                  {theme.id === t.id && <Text style={styles.checkMark}>✓</Text>}
+                </View>
+                <View style={styles.themeInfo}>
+                  <Text style={[styles.listItemText, { color: theme.text, fontSize }]}>
                     {t.name}
                   </Text>
-                  {theme.id === t.id && (
-                    <Text style={styles.themeCheck}>✓</Text>
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
+                  <View style={styles.colorSwatches}>
+                    <View style={[styles.swatch, { backgroundColor: t.primary }]} />
+                    <View style={[styles.swatch, { backgroundColor: t.primaryLight }]} />
+                    <View style={[styles.swatch, { backgroundColor: t.background }]} />
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))}
           </View>
         </Animated.View>
 
@@ -98,17 +104,15 @@ export default function SettingsScreen() {
             درباره اپ
           </Text>
           <View style={[styles.card, { backgroundColor: theme.card, shadowColor: theme.shadow }]}>
-            <View style={styles.aboutRow}>
+            <View style={[styles.aboutRow, { borderBottomColor: theme.primaryLight }]}>
               <Text style={[styles.aboutValue, { color: theme.textLight, fontSize }]}>۱.۰.۰</Text>
               <Text style={[styles.aboutLabel, { color: theme.text, fontSize }]}>نسخه</Text>
             </View>
-            <View style={[styles.divider, { backgroundColor: theme.primaryLight }]} />
-            <View style={styles.aboutRow}>
+            <View style={[styles.aboutRow, { borderBottomColor: theme.primaryLight }]}>
               <Text style={[styles.aboutValue, { color: theme.textLight, fontSize }]}>قرص</Text>
               <Text style={[styles.aboutLabel, { color: theme.text, fontSize }]}>نام اپ</Text>
             </View>
-            <View style={[styles.divider, { backgroundColor: theme.primaryLight }]} />
-            <View style={styles.aboutRow}>
+            <View style={[styles.aboutRow, { borderBottomWidth: 0 }]}>
               <Text style={[styles.aboutValue, { color: theme.textLight, fontSize }]}>
                 {Platform.OS === 'ios' ? 'iOS' : 'Android'}
               </Text>
@@ -140,7 +144,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   headerTitle: { fontFamily: 'Vazirmatn_Bold' },
-  scrollContent: { padding: 16, paddingBottom: 40, gap: 8 },
+  scrollContent: { padding: 16, paddingBottom: 100, gap: 8 },
   sectionTitle: {
     fontFamily: 'Vazirmatn_Bold',
     textAlign: 'right',
@@ -150,45 +154,51 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: 20,
-    padding: 16,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 3,
+    overflow: 'hidden',
+  },
+  listItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
     gap: 12,
   },
-  previewText: {
-    fontFamily: 'Vazirmatn',
-    textAlign: 'right',
-    padding: 12,
-    borderRadius: 12,
-  },
-  fontSizeButtons: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'flex-end' },
-  fontSizeButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 12,
-    borderWidth: 1.5,
-  },
-  fontSizeButtonText: { fontFamily: 'Vazirmatn_Bold', fontSize: 13 },
-  themesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'flex-end' },
-  themeButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 16,
+  themeListItem: {
+    flexDirection: 'row',
     alignItems: 'center',
-    minWidth: 80,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    gap: 12,
   },
-  themeButtonActive: {
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
+  listItemText: { fontFamily: 'Vazirmatn', flex: 1, textAlign: 'right' },
+  checkCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  themeButtonText: { color: '#FFFFFF', fontFamily: 'Vazirmatn_Bold' },
-  themeCheck: { color: '#FFFFFF', fontSize: 16, marginTop: 2 },
-  aboutRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 4 },
+  checkMark: { color: '#FFFFFF', fontSize: 14, fontWeight: 'bold' },
+  themeInfo: { flex: 1, alignItems: 'flex-end', gap: 6 },
+  colorSwatches: { flexDirection: 'row', gap: 4 },
+  swatch: { width: 20, height: 20, borderRadius: 10 },
+  aboutRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+  },
   aboutLabel: { fontFamily: 'Vazirmatn_Bold' },
   aboutValue: { fontFamily: 'Vazirmatn' },
-  divider: { height: 1, marginVertical: 4 },
   footer: { alignItems: 'center', paddingVertical: 24 },
   footerText: { fontFamily: 'Vazirmatn' },
 });
