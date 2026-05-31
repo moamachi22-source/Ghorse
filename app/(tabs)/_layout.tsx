@@ -39,7 +39,7 @@ export default function TabsLayout() {
           paddingBottom: 8,
           shadowColor: theme.shadow,
           shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.1,
+          shadowOpacity: 0.15,
           shadowRadius: 12,
           elevation: 10,
         },
@@ -49,10 +49,10 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="settings"
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="💊" label="داروها" focused={focused} />
+            <TabIcon emoji="⚙️" label="تنظیمات" focused={focused} />
           ),
         }}
       />
@@ -65,10 +65,10 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="settings"
+        name="index"
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="⚙️" label="تنظیمات" focused={focused} />
+            <TabIcon emoji="💊" label="داروها" focused={focused} />
           ),
         }}
       />
